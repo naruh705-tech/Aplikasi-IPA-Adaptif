@@ -12,17 +12,19 @@
         android:padding="20dp">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:text="Dashboard Siswa"
             android:textColor="@color/green_dark"
-            android:textSize="14sp" />
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
         <!-- Greeting Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
@@ -39,7 +41,7 @@
                     android:id="@+id/tvGreeting"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Halo, Budi! 👋"
+                    android:text="Halo, Budi!"
                     android:textColor="@color/green_dark"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -54,71 +56,15 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Menu: Siswa -->
+        <!-- Menu: Latihan Soal -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardSiswaMenu"
+            android:id="@+id/cardLatihanSoal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/green_light"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="16dp">
-
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/ic_book"
-                    app:tint="@color/green_primary" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Siswa"
-                        android:textColor="@color/green_dark"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Mulai belajar dengan visual"
-                        android:textColor="@color/gray_text"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_arrow_right"
-                    app:tint="@color/green_primary" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Menu: Latihan Soal -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardLatihanSoal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/gray_border"
-            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -155,6 +101,12 @@
                         android:textColor="@color/gray_text"
                         android:textSize="12sp" />
                 </LinearLayout>
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/green_primary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -201,10 +153,16 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lihat pendapatan dan trofi yang kamu dapatkan."
+                        android:text="Lihat nilai-nilai pengerjaan soal kamu."
                         android:textColor="@color/gray_text"
                         android:textSize="12sp" />
                 </LinearLayout>
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/green_primary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

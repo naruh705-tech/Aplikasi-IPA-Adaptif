@@ -31,20 +31,23 @@ class SiswaDashboardFragment : Fragment() {
 
         viewModel.currentUser.observe(viewLifecycleOwner) { user ->
             user?.let {
-                binding.tvGreeting.text = "Halo, ${it.nama.split(" ").first()}! 👋"
+                binding.tvGreeting.text = "Halo, ${it.nama.split(" ").first()}!"
             }
         }
 
-        binding.cardSiswaMenu.setOnClickListener {
-            findNavController().navigate(R.id.action_dashboard_to_materi)
-        }
-
         binding.cardLatihanSoal.setOnClickListener {
-            findNavController().navigate(R.id.action_dashboard_to_latihan)
+            val userId = com.app.manfaattumbuhan.data.local.StaticData.currentUser?.id
+            val unlocked = if (userId != null) com.app.manfaattumbuhan.data.local.StaticData.getUnlockedLevels(userId) else emptySet()
+            if (unlocked.contains("Mudah") || unlocked.contains("Sedang") || unlocked.contains("Sulit")) {
+                findNavController().navigate(R.id.action_dashboard_to_pilih_level)
+            } else {
+                val bundle = android.os.Bundle().apply { putString("tingkat", "Pre-test") }
+                findNavController().navigate(R.id.action_dashboard_to_latihan, bundle)
+            }
         }
 
         binding.cardRiwayatNilai.setOnClickListener {
-            findNavController().navigate(R.id.action_dashboard_to_profil)
+            findNavController().navigate(R.id.action_dashboard_to_riwayat)
         }
     }
 

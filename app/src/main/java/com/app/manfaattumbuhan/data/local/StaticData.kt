@@ -2,6 +2,7 @@ package com.app.manfaattumbuhan.data.local
 
 import com.app.manfaattumbuhan.R
 import com.app.manfaattumbuhan.domain.model.HasilBelajar
+import com.app.manfaattumbuhan.domain.model.NilaiSiswa
 import com.app.manfaattumbuhan.domain.model.Soal
 import com.app.manfaattumbuhan.domain.model.Tumbuhan
 import com.app.manfaattumbuhan.domain.model.User
@@ -57,7 +58,7 @@ object StaticData {
         )
     )
 
-    val passwords = mapOf(
+    val passwords = mutableMapOf(
         "siswa" to "siswa123",
         "andi" to "andi123",
         "citra" to "citra123",
@@ -189,5 +190,62 @@ object StaticData {
         HasilBelajar(4, "Dian Pertiwi", 88.5, 13, 15, 3.8)
     )
 
+    // Unlocked levels per user: userId -> set of unlocked difficulty levels
+    val unlockedLevels = mutableMapOf<Int, MutableSet<String>>()
+
+    // Current assigned level per user
+    val currentLevels = mutableMapOf<Int, String>()
+
+    // Riwayat nilai siswa
+    val nilaiSiswaList = mutableListOf<NilaiSiswa>()
+
     var currentUser: User? = null
+
+    fun getUnlockedLevels(userId: Int): MutableSet<String> {
+        return unlockedLevels.getOrPut(userId) { mutableSetOf("Pre-test") }
+    }
+
+    fun unlockLevel(userId: Int, level: String) {
+        getUnlockedLevels(userId).add(level)
+    }
+
+    fun setCurrentLevel(userId: Int, level: String) {
+        currentLevels[userId] = level
+    }
+
+    fun getCurrentLevel(userId: Int): String? {
+        return currentLevels[userId]
+    }
+
+    fun addNilaiSiswa(nilai: NilaiSiswa) {
+        nilaiSiswaList.add(nilai)
+    }
+
+    fun getNilaiByUserId(userId: Int): List<NilaiSiswa> {
+        return nilaiSiswaList.filter { it.siswaId == userId }
+    }
+
+    fun getAllNilai(): List<NilaiSiswa> {
+        return nilaiSiswaList.toList()
+    }
+
+    fun addUser(user: User, password: String) {
+        users.add(user)
+        passwords[user.username] = password
+    }
+
+    fun updateUser(user: User) {
+        val index = users.indexOfFirst { it.id == user.id }
+        if (index != -1) {
+            users[index] = user
+        }
+    }
+
+    fun deleteUser(userId: Int) {
+        val user = users.find { it.id == userId }
+        if (user != null) {
+            users.removeAll { it.id == userId }
+            passwords.remove(user.username)
+        }
+    }
 }

@@ -32,10 +32,28 @@ class LatihanViewModel(private val getSoalUseCase: GetSoalUseCase) : ViewModel()
     private var correctCount = 0
 
     fun loadSoal() {
-        val list = getSoalUseCase.getAll()
-        _soalList.value = list
-        if (list.isNotEmpty()) {
-            _currentSoal.value = list[0]
+        loadSoalByTingkat("Pre-test")
+    }
+
+    fun loadSoalByTingkat(tingkat: String) {
+        correctCount = 0
+        _currentIndex.value = 0
+        _isFinished.value = false
+        _selectedAnswer.value = null
+        _score.value = 0
+
+        val allSoal = getSoalUseCase.getAll()
+        val filtered = if (tingkat == "Pre-test") {
+            allSoal.shuffled().take(10)
+        } else {
+            allSoal.filter { it.tingkatKesulitan == tingkat }.let { list ->
+                if (list.isEmpty()) allSoal.shuffled().take(5) else list
+            }
+        }
+
+        _soalList.value = filtered
+        if (filtered.isNotEmpty()) {
+            _currentSoal.value = filtered[0]
             updateProgress()
         }
     }
@@ -83,4 +101,6 @@ class LatihanViewModel(private val getSoalUseCase: GetSoalUseCase) : ViewModel()
     }
 
     fun getTotalSoal(): Int = _soalList.value?.size ?: 0
+
+    fun getCorrectCount(): Int = correctCount
 }

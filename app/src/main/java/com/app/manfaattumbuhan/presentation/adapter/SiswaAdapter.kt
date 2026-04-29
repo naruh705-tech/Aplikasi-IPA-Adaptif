@@ -8,16 +8,23 @@ import androidx.recyclerview.widget.RecyclerView
 import com.app.manfaattumbuhan.databinding.ItemSiswaBinding
 import com.app.manfaattumbuhan.domain.model.User
 
-class SiswaAdapter : ListAdapter<User, SiswaAdapter.ViewHolder>(DiffCallback()) {
+class SiswaAdapter(
+    private val onEdit: ((User) -> Unit)? = null,
+    private val onDelete: ((User) -> Unit)? = null
+) : ListAdapter<User, SiswaAdapter.ViewHolder>(DiffCallback()) {
 
     inner class ViewHolder(private val binding: ItemSiswaBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(user: User) {
             binding.tvNamaSiswa.text = user.nama
+            binding.tvKelasSiswa.text = user.kelas
             if (user.avatarRes != 0) {
                 binding.imgAvatar.setImageResource(user.avatarRes)
             }
+
+            binding.btnEditSiswa.setOnClickListener { onEdit?.invoke(user) }
+            binding.btnDeleteSiswa.setOnClickListener { onDelete?.invoke(user) }
         }
     }
 

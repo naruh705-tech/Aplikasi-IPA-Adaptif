@@ -5,26 +5,25 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.app.manfaattumbuhan.R
+import com.app.manfaattumbuhan.data.remote.model.SiswaInfo
 import com.app.manfaattumbuhan.databinding.ItemSiswaBinding
-import com.app.manfaattumbuhan.domain.model.User
 
 class SiswaAdapter(
-    private val onEdit: ((User) -> Unit)? = null,
-    private val onDelete: ((User) -> Unit)? = null
-) : ListAdapter<User, SiswaAdapter.ViewHolder>(DiffCallback()) {
+    private val onEdit: ((SiswaInfo) -> Unit)? = null,
+    private val onDelete: ((SiswaInfo) -> Unit)? = null
+) : ListAdapter<SiswaInfo, SiswaAdapter.ViewHolder>(DiffCallback()) {
 
     inner class ViewHolder(private val binding: ItemSiswaBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(user: User) {
-            binding.tvNamaSiswa.text = user.nama
-            binding.tvKelasSiswa.text = user.kelas
-            if (user.avatarRes != 0) {
-                binding.imgAvatar.setImageResource(user.avatarRes)
-            }
+        fun bind(siswa: SiswaInfo) {
+            binding.tvNamaSiswa.text = siswa.nama
+            binding.tvKelasSiswa.text = "NIM: ${siswa.nim} | Kelas: ${siswa.kelas}"
+            binding.imgAvatar.setImageResource(R.drawable.avatar_siswa)
 
-            binding.btnEditSiswa.setOnClickListener { onEdit?.invoke(user) }
-            binding.btnDeleteSiswa.setOnClickListener { onDelete?.invoke(user) }
+            binding.btnEditSiswa.setOnClickListener { onEdit?.invoke(siswa) }
+            binding.btnDeleteSiswa.setOnClickListener { onDelete?.invoke(siswa) }
         }
     }
 
@@ -39,8 +38,8 @@ class SiswaAdapter(
         holder.bind(getItem(position))
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<User>() {
-        override fun areItemsTheSame(oldItem: User, newItem: User) = oldItem.id == newItem.id
-        override fun areContentsTheSame(oldItem: User, newItem: User) = oldItem == newItem
+    class DiffCallback : DiffUtil.ItemCallback<SiswaInfo>() {
+        override fun areItemsTheSame(oldItem: SiswaInfo, newItem: SiswaInfo) = oldItem.id == newItem.id
+        override fun areContentsTheSame(oldItem: SiswaInfo, newItem: SiswaInfo) = oldItem == newItem
     }
 }

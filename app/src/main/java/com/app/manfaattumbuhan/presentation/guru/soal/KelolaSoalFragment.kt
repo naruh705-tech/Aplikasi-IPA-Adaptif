@@ -4,16 +4,25 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.manfaattumbuhan.R
-import com.app.manfaattumbuhan.data.local.StaticData
+import com.app.manfaattumbuhan.data.local.TokenManager
+import com.app.manfaattumbuhan.data.remote.model.SoalApi
 import com.app.manfaattumbuhan.databinding.FragmentKelolaSoalBinding
+import com.app.manfaattumbuhan.presentation.adapter.SoalGuruAdapter
 
 class KelolaSoalFragment : Fragment() {
 
     private var _binding: FragmentKelolaSoalBinding? = null
     private val binding get() = _binding!!
+    private lateinit var viewModel: KelolaSoalViewModel
+    private lateinit var adapter: SoalGuruAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,40 +35,114 @@ class KelolaSoalFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        updateCounts()
+        TokenManager.init(requireContext())
+        viewModel = ViewModelProvider(this, KelolaSoalViewModelFactory())[KelolaSoalViewModel::class.java]
 
+        setupRecyclerView()
+        setupListeners()
+        observeData()
+        viewModel.loadSoal()
+    }
+
+    private fun setupRecyclerView() {
+        adapter = SoalGuruAdapter(
+            onEdit = { soal -> showEditDialog(soal) },
+            onDelete = { soal -> showDeleteConfirmation(soal) }
+        )
+        binding.rvSoal.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvSoal.adapter = adapter
+    }
+
+    private fun setupListeners() {
         binding.imgProfile.setOnClickListener {
             findNavController().navigate(R.id.action_soal_to_profil)
         }
 
-        binding.cardMudah.setOnClickListener {
-            navigateToSoalList("Mudah")
-        }
-
-        binding.cardSedang.setOnClickListener {
-            navigateToSoalList("Sedang")
-        }
-
-        binding.cardSulit.setOnClickListener {
-            navigateToSoalList("Sulit")
+        binding.btnBuatSoal.setOnClickListener {
+            showCreateDialog()
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        updateCounts()
+    private fun observeData() {
+        viewModel.soalList.observe(viewLifecycleOwner) { list ->
+            adapter.submitList(list)
+            binding.tvSoalCount.text = "${list.size} soal"
+            binding.tvEmptyState.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+        }
+
+        viewModel.isLoading.observe(viewLifecycleOwner) { loading ->
+            binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+        }
+
+        viewModel.error.observe(viewLifecycleOwner) { err ->
+            err?.let { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() }
+        }
     }
 
-    private fun updateCounts() {
-        val allSoal = StaticData.soalList
-        binding.tvCountMudah.text = "${allSoal.count { it.tingkatKesulitan == "Mudah" }} soal"
-        binding.tvCountSedang.text = "${allSoal.count { it.tingkatKesulitan == "Sedang" }} soal"
-        binding.tvCountSulit.text = "${allSoal.count { it.tingkatKesulitan == "Sulit" }} soal"
+    private fun showCreateDialog() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_soal, null)
+        val etJudul = dialogView.findViewById<EditText>(R.id.etJudul)
+        val etDeskripsi = dialogView.findViewById<EditText>(R.id.etDeskripsi)
+        val etFotoUrl = dialogView.findViewById<EditText>(R.id.etFotoUrl)
+        val etVideoUrl = dialogView.findViewById<EditText>(R.id.etVideoUrl)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Buat Soal Baru")
+            .setView(dialogView)
+            .setPositiveButton("Simpan") { _, _ ->
+                val judul = etJudul.text.toString().trim()
+                val deskripsi = etDeskripsi.text.toString().trim()
+                val fotoUrl = etFotoUrl.text.toString().trim().ifBlank { null }
+                val videoUrl = etVideoUrl.text.toString().trim().ifBlank { null }
+
+                if (judul.isBlank() || deskripsi.isBlank()) {
+                    Toast.makeText(requireContext(), "Judul dan deskripsi harus diisi", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                viewModel.addSoal(judul, deskripsi, fotoUrl, videoUrl)
+            }
+            .setNegativeButton("Batal", null)
+            .show()
     }
 
-    private fun navigateToSoalList(tingkat: String) {
-        val bundle = Bundle().apply { putString("tingkat", tingkat) }
-        findNavController().navigate(R.id.action_soal_to_soalList, bundle)
+    private fun showEditDialog(soal: SoalApi) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_soal, null)
+        val etJudul = dialogView.findViewById<EditText>(R.id.etJudul)
+        val etDeskripsi = dialogView.findViewById<EditText>(R.id.etDeskripsi)
+        val etFotoUrl = dialogView.findViewById<EditText>(R.id.etFotoUrl)
+        val etVideoUrl = dialogView.findViewById<EditText>(R.id.etVideoUrl)
+
+        etJudul.setText(soal.judul)
+        etDeskripsi.setText(soal.deskripsi)
+        etFotoUrl.setText(soal.foto_url ?: "")
+        etVideoUrl.setText(soal.video_url ?: "")
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Soal")
+            .setView(dialogView)
+            .setPositiveButton("Simpan") { _, _ ->
+                val judul = etJudul.text.toString().trim()
+                val deskripsi = etDeskripsi.text.toString().trim()
+                val fotoUrl = etFotoUrl.text.toString().trim().ifBlank { null }
+                val videoUrl = etVideoUrl.text.toString().trim().ifBlank { null }
+
+                if (judul.isBlank() || deskripsi.isBlank()) {
+                    Toast.makeText(requireContext(), "Judul dan deskripsi harus diisi", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                viewModel.updateSoal(soal.id, judul, deskripsi, fotoUrl, videoUrl)
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun showDeleteConfirmation(soal: SoalApi) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Hapus Soal")
+            .setMessage("Yakin ingin menghapus soal \"${soal.judul}\"?")
+            .setPositiveButton("Hapus") { _, _ -> viewModel.deleteSoal(soal.id) }
+            .setNegativeButton("Batal", null)
+            .show()
     }
 
     override fun onDestroyView() {

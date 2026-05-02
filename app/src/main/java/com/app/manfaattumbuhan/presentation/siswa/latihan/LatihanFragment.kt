@@ -7,14 +7,20 @@ import android.view.ViewGroup
 import android.widget.RadioButton
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.app.manfaattumbuhan.R
 import com.app.manfaattumbuhan.data.local.StaticData
+import com.app.manfaattumbuhan.data.local.TokenManager
+import com.app.manfaattumbuhan.data.remote.ApiConfig
+import com.app.manfaattumbuhan.data.remote.ApiService
+import com.app.manfaattumbuhan.data.remote.model.CreateNilaiRequest
 import com.app.manfaattumbuhan.data.repository.SoalRepositoryImpl
 import com.app.manfaattumbuhan.databinding.FragmentLatihanBinding
 import com.app.manfaattumbuhan.domain.model.NilaiSiswa
 import com.app.manfaattumbuhan.domain.usecase.GetSoalUseCase
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,6 +33,7 @@ class LatihanFragment : Fragment() {
         LatihanViewModelFactory(GetSoalUseCase(SoalRepositoryImpl()))
     }
     private var tingkat: String = "Pre-test"
+    private val apiService = ApiConfig.createService<ApiService>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,6 +46,7 @@ class LatihanFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        TokenManager.init(requireContext())
         tingkat = arguments?.getString("tingkat") ?: "Pre-test"
         viewModel.loadSoalByTingkat(tingkat)
 
@@ -114,6 +122,26 @@ class LatihanFragment : Fragment() {
             tanggal = dateFormat.format(Date())
         )
         StaticData.addNilaiSiswa(nilai)
+
+        // Also save to API if logged in
+        val token = TokenManager.getToken()
+        val userId = TokenManager.getUserId()
+        if (token.isNotBlank() && userId.isNotBlank()) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    apiService.createNilai(
+                        token, userId,
+                        CreateNilaiRequest(
+                            soal_id = "latihan-$tingkat",
+                            nilai = score.toDouble(),
+                            catatan = "Benar ${viewModel.getCorrectCount()} dari ${viewModel.getTotalSoal()} - Level $tingkat"
+                        )
+                    )
+                } catch (_: Exception) {
+                    // Silently fail API save
+                }
+            }
+        }
     }
 
     private fun showResultDialog(score: Int) {

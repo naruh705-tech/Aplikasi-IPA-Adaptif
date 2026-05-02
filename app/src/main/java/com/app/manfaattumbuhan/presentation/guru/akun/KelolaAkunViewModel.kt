@@ -3,42 +3,98 @@ package com.app.manfaattumbuhan.presentation.guru.akun
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.app.manfaattumbuhan.R
-import com.app.manfaattumbuhan.data.local.StaticData
-import com.app.manfaattumbuhan.domain.model.User
-import com.app.manfaattumbuhan.domain.model.UserRole
-import com.app.manfaattumbuhan.domain.usecase.GetSiswaUseCase
+import androidx.lifecycle.viewModelScope
+import com.app.manfaattumbuhan.data.local.TokenManager
+import com.app.manfaattumbuhan.data.remote.ApiConfig
+import com.app.manfaattumbuhan.data.remote.ApiService
+import com.app.manfaattumbuhan.data.remote.model.CreateSiswaRequest
+import com.app.manfaattumbuhan.data.remote.model.SiswaInfo
+import com.app.manfaattumbuhan.data.remote.model.UpdateSiswaRequest
+import kotlinx.coroutines.launch
 
-class KelolaAkunViewModel(private val getSiswaUseCase: GetSiswaUseCase) : ViewModel() {
+class KelolaAkunViewModel : ViewModel() {
 
-    private val _siswaList = MutableLiveData<List<User>>()
-    val siswaList: LiveData<List<User>> = _siswaList
+    private val apiService = ApiConfig.createService<ApiService>()
+
+    private val _siswaList = MutableLiveData<List<SiswaInfo>>()
+    val siswaList: LiveData<List<SiswaInfo>> = _siswaList
+
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
+
+    private val _error = MutableLiveData<String?>()
+    val error: LiveData<String?> = _error
 
     fun loadSiswa() {
-        _siswaList.value = getSiswaUseCase.execute()
+        _isLoading.value = true
+        viewModelScope.launch {
+            try {
+                val token = TokenManager.getToken()
+                val response = apiService.getSiswaList(token)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    _siswaList.postValue(response.body()!!.data!!.siswa)
+                } else {
+                    _error.postValue(response.body()?.message ?: "Gagal memuat siswa")
+                }
+            } catch (e: Exception) {
+                _error.postValue("Error: ${e.message}")
+            } finally {
+                _isLoading.postValue(false)
+            }
+        }
     }
 
-    fun addSiswa(nama: String, username: String, password: String, kelas: String) {
-        val newUser = User(
-            id = System.currentTimeMillis().toInt(),
-            nama = nama,
-            username = username,
-            role = UserRole.SISWA,
-            kelas = kelas,
-            sekolah = "SLB Negeri Harapan",
-            avatarRes = R.drawable.avatar_siswa
-        )
-        StaticData.addUser(newUser, password)
-        loadSiswa()
+    fun addSiswa(nim: String, nama: String, kelas: String, password: String) {
+        viewModelScope.launch {
+            try {
+                val token = TokenManager.getToken()
+                val response = apiService.createSiswa(
+                    token,
+                    CreateSiswaRequest(nim, nama, kelas, password)
+                )
+                if (response.isSuccessful && response.body()?.success == true) {
+                    loadSiswa()
+                } else {
+                    _error.postValue(response.body()?.message ?: "Gagal menambah siswa")
+                }
+            } catch (e: Exception) {
+                _error.postValue("Error: ${e.message}")
+            }
+        }
     }
 
-    fun updateSiswa(user: User) {
-        StaticData.updateUser(user)
-        loadSiswa()
+    fun updateSiswa(id: String, nama: String?, nim: String?, kelas: String?, password: String?) {
+        viewModelScope.launch {
+            try {
+                val token = TokenManager.getToken()
+                val response = apiService.updateSiswa(
+                    token, id,
+                    UpdateSiswaRequest(nim, nama, kelas, password)
+                )
+                if (response.isSuccessful && response.body()?.success == true) {
+                    loadSiswa()
+                } else {
+                    _error.postValue(response.body()?.message ?: "Gagal memperbarui siswa")
+                }
+            } catch (e: Exception) {
+                _error.postValue("Error: ${e.message}")
+            }
+        }
     }
 
-    fun deleteSiswa(userId: Int) {
-        StaticData.deleteUser(userId)
-        loadSiswa()
+    fun deleteSiswa(id: String) {
+        viewModelScope.launch {
+            try {
+                val token = TokenManager.getToken()
+                val response = apiService.deleteSiswa(token, id)
+                if (response.isSuccessful) {
+                    loadSiswa()
+                } else {
+                    _error.postValue("Gagal menghapus siswa")
+                }
+            } catch (e: Exception) {
+                _error.postValue("Error: ${e.message}")
+            }
+        }
     }
 }

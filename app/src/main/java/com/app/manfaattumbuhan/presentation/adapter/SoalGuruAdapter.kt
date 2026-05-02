@@ -5,22 +5,21 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.app.manfaattumbuhan.data.remote.model.SoalApi
 import com.app.manfaattumbuhan.databinding.ItemSoalGuruBinding
-import com.app.manfaattumbuhan.domain.model.Soal
 
 class SoalGuruAdapter(
-    private val onEdit: (Soal) -> Unit,
-    private val onDelete: (Soal) -> Unit
-) : ListAdapter<Soal, SoalGuruAdapter.ViewHolder>(DiffCallback()) {
+    private val onEdit: (SoalApi) -> Unit,
+    private val onDelete: (SoalApi) -> Unit
+) : ListAdapter<SoalApi, SoalGuruAdapter.ViewHolder>(DiffCallback()) {
 
     inner class ViewHolder(private val binding: ItemSoalGuruBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(soal: Soal) {
-            binding.tvPertanyaan.text = soal.pertanyaan
-            binding.tvModul.text = "Modul: ${soal.modul}"
-            binding.tvTingkat.text = soal.tingkatKesulitan
-            binding.tvTerakhirDiubah.text = "Terakhir diubah: Hari ini"
+        fun bind(soal: SoalApi) {
+            binding.tvJudul.text = soal.judul
+            binding.tvDeskripsi.text = soal.deskripsi
+            binding.tvTerakhirDiubah.text = "Dibuat: ${soal.created_at?.take(10) ?: "-"}"
 
             binding.btnEdit.setOnClickListener { onEdit(soal) }
             binding.btnDelete.setOnClickListener { onDelete(soal) }
@@ -38,8 +37,8 @@ class SoalGuruAdapter(
         holder.bind(getItem(position))
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<Soal>() {
-        override fun areItemsTheSame(oldItem: Soal, newItem: Soal) = oldItem.id == newItem.id
-        override fun areContentsTheSame(oldItem: Soal, newItem: Soal) = oldItem == newItem
+    class DiffCallback : DiffUtil.ItemCallback<SoalApi>() {
+        override fun areItemsTheSame(oldItem: SoalApi, newItem: SoalApi) = oldItem.id == newItem.id
+        override fun areContentsTheSame(oldItem: SoalApi, newItem: SoalApi) = oldItem == newItem
     }
 }

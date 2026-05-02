@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.manfaattumbuhan.R
+import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.databinding.FragmentLaporanBinding
 import com.app.manfaattumbuhan.presentation.adapter.LaporanAdapter
 
@@ -29,6 +31,8 @@ class LaporanFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        TokenManager.init(requireContext())
+
         val adapter = LaporanAdapter()
         binding.rvLaporan.layoutManager = LinearLayoutManager(context)
         binding.rvLaporan.adapter = adapter
@@ -39,7 +43,7 @@ class LaporanFragment : Fragment() {
 
         viewModel.loadData()
 
-        viewModel.nilaiList.observe(viewLifecycleOwner) { list ->
+        viewModel.laporanList.observe(viewLifecycleOwner) { list ->
             if (list.isEmpty()) {
                 binding.tvEmptyState.visibility = View.VISIBLE
                 binding.rvLaporan.visibility = View.GONE
@@ -48,6 +52,10 @@ class LaporanFragment : Fragment() {
                 binding.rvLaporan.visibility = View.VISIBLE
                 adapter.submitList(list)
             }
+        }
+
+        viewModel.error.observe(viewLifecycleOwner) { err ->
+            err?.let { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() }
         }
     }
 

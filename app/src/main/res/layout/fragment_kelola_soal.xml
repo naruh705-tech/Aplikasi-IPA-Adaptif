@@ -23,6 +23,17 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBuatSoal"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:text="+ Buat Soal"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            app:backgroundTint="@color/green_primary"
+            app:cornerRadius="20dp" />
+
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/imgProfile"
             android:layout_width="36dp"
@@ -33,189 +44,38 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/tvSoalCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="20dp"
-        android:paddingBottom="16dp"
-        android:text="Pilih tingkat kesulitan soal yang ingin dikelola"
+        android:paddingBottom="8dp"
+        android:text="0 soal"
         android:textColor="@color/gray_text"
         android:textSize="14sp" />
 
-    <!-- Card Mudah -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardMudah"
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvEmptyState"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="12dp"
-        app:cardBackgroundColor="@color/green_light"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp"
-        app:strokeColor="@color/green_primary"
-        app:strokeWidth="1dp">
+        android:gravity="center"
+        android:padding="48dp"
+        android:text="Belum ada soal."
+        android:textColor="@color/gray_text"
+        android:textSize="16sp"
+        android:visibility="gone" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="20dp">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:padding="6dp"
-                android:src="@drawable/ic_quiz"
-                app:tint="@color/green_primary" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Soal Mudah"
-                    android:textColor="@color/green_dark"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvCountMudah"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 soal"
-                    android:textColor="@color/gray_text"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_arrow_right"
-                app:tint="@color/green_primary" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Card Sedang -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardSedang"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSoal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="12dp"
-        app:cardBackgroundColor="@color/white"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp"
-        app:strokeColor="@color/gray_border"
-        app:strokeWidth="1dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="20dp">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:padding="6dp"
-                android:src="@drawable/ic_quiz"
-                app:tint="#FF9800" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Soal Sedang"
-                    android:textColor="@color/green_dark"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvCountSedang"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 soal"
-                    android:textColor="@color/gray_text"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_arrow_right"
-                app:tint="@color/gray_text" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Card Sulit -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardSulit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="12dp"
-        app:cardBackgroundColor="@color/white"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp"
-        app:strokeColor="@color/gray_border"
-        app:strokeWidth="1dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="20dp">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:padding="6dp"
-                android:src="@drawable/ic_quiz"
-                app:tint="#F44336" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Soal Sulit"
-                    android:textColor="@color/green_dark"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvCountSulit"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 soal"
-                    android:textColor="@color/gray_text"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_arrow_right"
-                app:tint="@color/gray_text" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+        android:layout_height="match_parent"
+        android:padding="12dp"
+        android:clipToPadding="false" />
 
 </LinearLayout>

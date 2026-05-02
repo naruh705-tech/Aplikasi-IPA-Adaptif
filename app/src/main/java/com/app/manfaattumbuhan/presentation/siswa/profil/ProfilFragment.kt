@@ -6,7 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import com.app.manfaattumbuhan.R
+import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.databinding.FragmentProfilBinding
 import com.app.manfaattumbuhan.presentation.login.LoginActivity
 
@@ -14,7 +15,6 @@ class ProfilFragment : Fragment() {
 
     private var _binding: FragmentProfilBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: ProfilViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -27,31 +27,22 @@ class ProfilFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.loadUser()
+        TokenManager.init(requireContext())
 
-        viewModel.currentUser.observe(viewLifecycleOwner) { user ->
-            user?.let {
-                binding.tvNama.text = it.nama
-                binding.tvKelas.text = it.kelas
-                binding.tvSekolah.text = it.sekolah
-                if (it.avatarRes != 0) {
-                    binding.imgAvatar.setImageResource(it.avatarRes)
-                }
-                binding.tvStatusBadge.text = "SISWA AKTIF"
-            }
-        }
+        binding.tvNama.text = TokenManager.getUserName()
+        binding.tvKelas.text = TokenManager.getUserKelas()
+        binding.tvSekolah.text = "NIM: ${TokenManager.getUserNim()}"
+        binding.imgAvatar.setImageResource(R.drawable.avatar_siswa)
+        binding.tvStatusBadge.text = "SISWA AKTIF"
 
-        viewModel.totalLatihan.observe(viewLifecycleOwner) { total ->
-            binding.tvTotalLatihan.text = total.toString()
-            binding.tvLabelLatihan.text = "Latihan"
-        }
+        binding.tvTotalLatihan.text = "-"
+        binding.tvLabelLatihan.text = "Latihan"
 
-        viewModel.streak.observe(viewLifecycleOwner) { streak ->
-            binding.tvStreak.text = "$streak Hari"
-            binding.tvLabelStreak.text = "Beruntun"
-        }
+        binding.tvStreak.text = "-"
+        binding.tvLabelStreak.text = "Beruntun"
 
         binding.btnKeluar.setOnClickListener {
+            TokenManager.clear()
             val intent = Intent(requireContext(), LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)

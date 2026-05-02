@@ -4,26 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.app.manfaattumbuhan.data.repository.SoalRepositoryImpl
+import androidx.navigation.fragment.findNavController
+import com.app.manfaattumbuhan.R
+import com.app.manfaattumbuhan.data.local.StaticData
 import com.app.manfaattumbuhan.databinding.FragmentKelolaSoalBinding
-import com.app.manfaattumbuhan.domain.model.Soal
-import com.app.manfaattumbuhan.domain.usecase.GetSoalUseCase
-import com.app.manfaattumbuhan.presentation.adapter.SoalGuruAdapter
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class KelolaSoalFragment : Fragment() {
 
     private var _binding: FragmentKelolaSoalBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: KelolaSoalViewModel by viewModels {
-        KelolaSoalViewModelFactory(GetSoalUseCase(SoalRepositoryImpl()))
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,79 +26,40 @@ class KelolaSoalFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapter = SoalGuruAdapter(
-            onEdit = { /* placeholder for edit */ },
-            onDelete = { soal ->
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Hapus Soal")
-                    .setMessage("Apakah Anda yakin ingin menghapus soal ini?")
-                    .setPositiveButton("Hapus") { _, _ ->
-                        viewModel.deleteSoal(soal.id)
-                    }
-                    .setNegativeButton("Batal", null)
-                    .show()
-            }
-        )
+        updateCounts()
 
-        binding.rvSoal.layoutManager = LinearLayoutManager(context)
-        binding.rvSoal.adapter = adapter
-
-        viewModel.loadSoal()
-        viewModel.soalList.observe(viewLifecycleOwner) { list ->
-            adapter.submitList(list)
+        binding.imgProfile.setOnClickListener {
+            findNavController().navigate(R.id.action_soal_to_profil)
         }
 
-        binding.fabBuatSoal.setOnClickListener {
-            showAddSoalDialog()
+        binding.cardMudah.setOnClickListener {
+            navigateToSoalList("Mudah")
+        }
+
+        binding.cardSedang.setOnClickListener {
+            navigateToSoalList("Sedang")
+        }
+
+        binding.cardSulit.setOnClickListener {
+            navigateToSoalList("Sulit")
         }
     }
 
-    private fun showAddSoalDialog() {
-        val layout = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(48, 32, 48, 16)
-        }
+    override fun onResume() {
+        super.onResume()
+        updateCounts()
+    }
 
-        val etPertanyaan = EditText(requireContext()).apply {
-            hint = "Pertanyaan"
-        }
-        val etPilihan1 = EditText(requireContext()).apply { hint = "Pilihan 1 (benar)" }
-        val etPilihan2 = EditText(requireContext()).apply { hint = "Pilihan 2" }
-        val etPilihan3 = EditText(requireContext()).apply { hint = "Pilihan 3" }
-        val etPilihan4 = EditText(requireContext()).apply { hint = "Pilihan 4" }
+    private fun updateCounts() {
+        val allSoal = StaticData.soalList
+        binding.tvCountMudah.text = "${allSoal.count { it.tingkatKesulitan == "Mudah" }} soal"
+        binding.tvCountSedang.text = "${allSoal.count { it.tingkatKesulitan == "Sedang" }} soal"
+        binding.tvCountSulit.text = "${allSoal.count { it.tingkatKesulitan == "Sulit" }} soal"
+    }
 
-        layout.addView(etPertanyaan)
-        layout.addView(etPilihan1)
-        layout.addView(etPilihan2)
-        layout.addView(etPilihan3)
-        layout.addView(etPilihan4)
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Buat Soal Baru")
-            .setView(layout)
-            .setPositiveButton("Simpan") { _, _ ->
-                val pertanyaan = etPertanyaan.text.toString()
-                val pilihan = listOf(
-                    etPilihan1.text.toString(),
-                    etPilihan2.text.toString(),
-                    etPilihan3.text.toString(),
-                    etPilihan4.text.toString()
-                )
-                if (pertanyaan.isNotBlank() && pilihan.all { it.isNotBlank() }) {
-                    val newSoal = Soal(
-                        id = System.currentTimeMillis().toInt(),
-                        pertanyaan = pertanyaan,
-                        pilihan = pilihan,
-                        jawabanBenar = 0,
-                        modul = "Manfaat Tumbuhan",
-                        tingkatKesulitan = "Sedang"
-                    )
-                    viewModel.addSoal(newSoal)
-                    Toast.makeText(context, "Soal berhasil ditambahkan", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Batal", null)
-            .show()
+    private fun navigateToSoalList(tingkat: String) {
+        val bundle = Bundle().apply { putString("tingkat", tingkat) }
+        findNavController().navigate(R.id.action_soal_to_soalList, bundle)
     }
 
     override fun onDestroyView() {

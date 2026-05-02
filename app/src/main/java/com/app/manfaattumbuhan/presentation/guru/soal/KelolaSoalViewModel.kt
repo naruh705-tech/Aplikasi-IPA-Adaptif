@@ -24,4 +24,9 @@ class KelolaSoalViewModel(private val getSoalUseCase: GetSoalUseCase) : ViewMode
         getSoalUseCase.add(soal)
         loadSoal()
     }
+
+    fun updateSoal(soal: Soal) {
+        getSoalUseCase.update(soal)
+        loadSoal()
+    }
 }

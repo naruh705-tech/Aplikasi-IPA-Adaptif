@@ -6,17 +6,17 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.app.manfaattumbuhan.data.repository.SoalRepositoryImpl
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.app.manfaattumbuhan.R
 import com.app.manfaattumbuhan.databinding.FragmentLaporanBinding
-import com.app.manfaattumbuhan.domain.usecase.GetSoalUseCase
+import com.app.manfaattumbuhan.presentation.adapter.LaporanAdapter
 
 class LaporanFragment : Fragment() {
 
     private var _binding: FragmentLaporanBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: LaporanViewModel by viewModels {
-        LaporanViewModelFactory(GetSoalUseCase(SoalRepositoryImpl()))
-    }
+    private val viewModel: LaporanViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -29,22 +29,25 @@ class LaporanFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val adapter = LaporanAdapter()
+        binding.rvLaporan.layoutManager = LinearLayoutManager(context)
+        binding.rvLaporan.adapter = adapter
+
+        binding.imgProfile.setOnClickListener {
+            findNavController().navigate(R.id.action_laporan_to_profil)
+        }
+
         viewModel.loadData()
 
-        viewModel.rataRataKelas.observe(viewLifecycleOwner) { rata ->
-            binding.tvRataRata.text = String.format("%.1f", rata)
-        }
-
-        viewModel.tugasSelesaiPercentage.observe(viewLifecycleOwner) { persen ->
-            binding.tvTugasSelesai.text = "$persen%"
-        }
-
-        viewModel.peningkatan.observe(viewLifecycleOwner) { peningkatan ->
-            binding.tvPeningkatan.text = "+${String.format("%.1f", peningkatan)}%"
-        }
-
-        binding.btnLihatDetail.setOnClickListener {
-            // placeholder for detailed view
+        viewModel.nilaiList.observe(viewLifecycleOwner) { list ->
+            if (list.isEmpty()) {
+                binding.tvEmptyState.visibility = View.VISIBLE
+                binding.rvLaporan.visibility = View.GONE
+            } else {
+                binding.tvEmptyState.visibility = View.GONE
+                binding.rvLaporan.visibility = View.VISIBLE
+                adapter.submitList(list)
+            }
         }
     }
 

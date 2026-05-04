@@ -2,7 +2,7 @@ package com.app.manfaattumbuhan.domain.model
 
 data class NilaiSiswa(
     val id: Int,
-    val siswaId: Int,
+    val siswaId: String,
     val namaSiswa: String,
     val tingkat: String,
     val nilai: Int,

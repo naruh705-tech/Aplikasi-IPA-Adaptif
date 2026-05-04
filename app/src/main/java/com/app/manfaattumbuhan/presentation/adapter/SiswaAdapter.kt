@@ -19,7 +19,7 @@ class SiswaAdapter(
 
         fun bind(siswa: SiswaInfo) {
             binding.tvNamaSiswa.text = siswa.nama
-            binding.tvKelasSiswa.text = "NIM: ${siswa.nim} | Kelas: ${siswa.kelas}"
+            binding.tvKelasSiswa.text = "NISN: ${siswa.nim} | Kelas: ${siswa.kelas}"
             binding.imgAvatar.setImageResource(R.drawable.avatar_siswa)
 
             binding.btnEditSiswa.setOnClickListener { onEdit?.invoke(siswa) }

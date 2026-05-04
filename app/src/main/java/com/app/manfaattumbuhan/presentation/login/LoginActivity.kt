@@ -50,7 +50,7 @@ class LoginActivity : AppCompatActivity() {
                     binding.cardGuru.strokeColor = getColor(R.color.gray_border)
                     binding.cardGuru.strokeWidth = 2
                     binding.layoutLoginForm.visibility = View.VISIBLE
-                    binding.etUsername.hint = "NIM"
+                    binding.etUsername.hint = "NISN"
                 }
                 UserRole.GURU -> {
                     binding.cardGuru.setCardBackgroundColor(getColor(R.color.green_light))

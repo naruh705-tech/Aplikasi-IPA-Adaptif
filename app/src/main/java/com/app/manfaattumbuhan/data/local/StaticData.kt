@@ -221,7 +221,7 @@ object StaticData {
         nilaiSiswaList.add(nilai)
     }
 
-    fun getNilaiByUserId(userId: Int): List<NilaiSiswa> {
+    fun getNilaiByUserId(userId: String): List<NilaiSiswa> {
         return nilaiSiswaList.filter { it.siswaId == userId }
     }
 

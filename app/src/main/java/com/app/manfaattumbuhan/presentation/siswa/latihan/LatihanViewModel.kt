@@ -3,10 +3,18 @@ package com.app.manfaattumbuhan.presentation.siswa.latihan
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.app.manfaattumbuhan.data.local.TokenManager
+import com.app.manfaattumbuhan.data.remote.ApiConfig
+import com.app.manfaattumbuhan.data.remote.ApiService
 import com.app.manfaattumbuhan.domain.model.Soal
-import com.app.manfaattumbuhan.domain.usecase.GetSoalUseCase
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 
-class LatihanViewModel(private val getSoalUseCase: GetSoalUseCase) : ViewModel() {
+class LatihanViewModel : ViewModel() {
+
+    private val apiService = ApiConfig.createService<ApiService>()
 
     private val _soalList = MutableLiveData<List<Soal>>()
     val soalList: LiveData<List<Soal>> = _soalList
@@ -29,11 +37,13 @@ class LatihanViewModel(private val getSoalUseCase: GetSoalUseCase) : ViewModel()
     private val _progress = MutableLiveData(0)
     val progress: LiveData<Int> = _progress
 
-    private var correctCount = 0
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
 
-    fun loadSoal() {
-        loadSoalByTingkat("Pre-test")
-    }
+    private val _loadError = MutableLiveData<String?>()
+    val loadError: LiveData<String?> = _loadError
+
+    private var correctCount = 0
 
     fun loadSoalByTingkat(tingkat: String) {
         correctCount = 0
@@ -41,20 +51,63 @@ class LatihanViewModel(private val getSoalUseCase: GetSoalUseCase) : ViewModel()
         _isFinished.value = false
         _selectedAnswer.value = null
         _score.value = 0
+        _isLoading.value = true
 
-        val allSoal = getSoalUseCase.getAll()
-        val filtered = if (tingkat == "Pre-test") {
-            allSoal.shuffled().take(10)
-        } else {
-            allSoal.filter { it.tingkatKesulitan == tingkat }.let { list ->
-                if (list.isEmpty()) allSoal.shuffled().take(5) else list
+        viewModelScope.launch {
+            try {
+                val token = TokenManager.getToken()
+                val response = apiService.getSoalList(token, limit = 100)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val soalApiList = response.body()!!.data!!.soal
+                    val soalList = soalApiList.mapIndexedNotNull { index, soalApi ->
+                        parseSoalFromApi(index, soalApi)
+                    }
+
+                    val filtered = if (tingkat == "Pre-test") {
+                        soalList.shuffled().take(10)
+                    } else {
+                        soalList.shuffled().take(10)
+                    }
+
+                    _soalList.postValue(filtered)
+                    if (filtered.isNotEmpty()) {
+                        _currentSoal.postValue(filtered[0])
+                        _progress.postValue(((0 + 1) * 100) / filtered.size)
+                    } else {
+                        _loadError.postValue("Belum ada soal tersedia")
+                    }
+                } else {
+                    _loadError.postValue(response.body()?.message ?: "Gagal memuat soal")
+                }
+            } catch (e: Exception) {
+                _loadError.postValue("Error: ${e.message}")
+            } finally {
+                _isLoading.postValue(false)
             }
         }
+    }
 
-        _soalList.value = filtered
-        if (filtered.isNotEmpty()) {
-            _currentSoal.value = filtered[0]
-            updateProgress()
+    private fun parseSoalFromApi(index: Int, soalApi: com.app.manfaattumbuhan.data.remote.model.SoalApi): Soal? {
+        return try {
+            val json = JSONObject(soalApi.deskripsi)
+            val pilihanArray = json.getJSONArray("pilihan")
+            val pilihan = mutableListOf<String>()
+            for (i in 0 until pilihanArray.length()) {
+                pilihan.add(pilihanArray.getString(i))
+            }
+            val jawabanBenar = json.getInt("jawabanBenar")
+
+            Soal(
+                id = index,
+                pertanyaan = soalApi.judul,
+                imageUrl = soalApi.foto_url,
+                videoUrl = soalApi.video_url,
+                pilihan = pilihan,
+                jawabanBenar = jawabanBenar,
+                apiId = soalApi.id
+            )
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -103,4 +156,11 @@ class LatihanViewModel(private val getSoalUseCase: GetSoalUseCase) : ViewModel()
     fun getTotalSoal(): Int = _soalList.value?.size ?: 0
 
     fun getCorrectCount(): Int = correctCount
+}
+
+class LatihanViewModelFactory : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return LatihanViewModel() as T
+    }
 }

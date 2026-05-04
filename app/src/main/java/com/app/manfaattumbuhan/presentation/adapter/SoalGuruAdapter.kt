@@ -18,11 +18,30 @@ class SoalGuruAdapter(
 
         fun bind(soal: SoalApi) {
             binding.tvJudul.text = soal.judul
-            binding.tvDeskripsi.text = soal.deskripsi
+            binding.tvDeskripsi.text = parsePilihanPreview(soal.deskripsi)
             binding.tvTerakhirDiubah.text = "Dibuat: ${soal.created_at?.take(10) ?: "-"}"
 
             binding.btnEdit.setOnClickListener { onEdit(soal) }
             binding.btnDelete.setOnClickListener { onDelete(soal) }
+        }
+
+        private fun parsePilihanPreview(deskripsi: String): String {
+            return try {
+                val json = org.json.JSONObject(deskripsi)
+                val pilihanArray = json.getJSONArray("pilihan")
+                val jawabanBenar = json.getInt("jawabanBenar")
+                val labels = listOf("A", "B", "C", "D", "E", "F")
+                val sb = StringBuilder()
+                for (i in 0 until pilihanArray.length()) {
+                    val label = if (i < labels.size) labels[i] else "${i + 1}"
+                    val marker = if (i == jawabanBenar) " *" else ""
+                    sb.append("$label. ${pilihanArray.getString(i)}$marker")
+                    if (i < pilihanArray.length() - 1) sb.append("  |  ")
+                }
+                sb.toString()
+            } catch (e: Exception) {
+                deskripsi
+            }
         }
     }
 

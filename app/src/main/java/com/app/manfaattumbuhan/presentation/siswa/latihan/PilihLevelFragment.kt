@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.app.manfaattumbuhan.R
 import com.app.manfaattumbuhan.data.local.StaticData
+import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.databinding.FragmentPilihLevelBinding
 
 class PilihLevelFragment : Fragment() {
@@ -26,9 +27,10 @@ class PilihLevelFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        TokenManager.init(requireContext())
         updateLevelCards()
 
-        val userId = StaticData.currentUser?.id ?: return
+        val userId = TokenManager.getUserId().hashCode()
         val currentLevel = StaticData.getCurrentLevel(userId)
 
         binding.cardPretest.setOnClickListener {
@@ -64,7 +66,7 @@ class PilihLevelFragment : Fragment() {
     }
 
     private fun updateLevelCards() {
-        val userId = StaticData.currentUser?.id ?: return
+        val userId = TokenManager.getUserId().hashCode()
         val currentLevel = StaticData.getCurrentLevel(userId)
         val unlocked = StaticData.getUnlockedLevels(userId)
 

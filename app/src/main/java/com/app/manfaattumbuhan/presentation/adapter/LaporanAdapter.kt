@@ -23,7 +23,7 @@ class LaporanAdapter : ListAdapter<LaporanItem, LaporanAdapter.ViewHolder>(DiffC
         val item = getItem(position)
         holder.binding.tvNamaSiswa.text = item.siswa.nama
         holder.binding.tvTingkat.text = "Kelas: ${item.siswa.kelas}"
-        holder.binding.tvTanggal.text = "NIM: ${item.siswa.nim}"
+        holder.binding.tvTanggal.text = "NISN: ${item.siswa.nim}"
         holder.binding.tvNilai.text = String.format("%.0f", item.rataRata)
         holder.binding.tvDetail.text = "${item.nilaiList.size} nilai"
     }

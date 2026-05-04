@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioButton
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -15,10 +16,9 @@ import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.data.remote.ApiConfig
 import com.app.manfaattumbuhan.data.remote.ApiService
 import com.app.manfaattumbuhan.data.remote.model.CreateNilaiRequest
-import com.app.manfaattumbuhan.data.repository.SoalRepositoryImpl
 import com.app.manfaattumbuhan.databinding.FragmentLatihanBinding
 import com.app.manfaattumbuhan.domain.model.NilaiSiswa
-import com.app.manfaattumbuhan.domain.usecase.GetSoalUseCase
+import com.bumptech.glide.Glide
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -29,9 +29,7 @@ class LatihanFragment : Fragment() {
 
     private var _binding: FragmentLatihanBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: LatihanViewModel by viewModels {
-        LatihanViewModelFactory(GetSoalUseCase(SoalRepositoryImpl()))
-    }
+    private val viewModel: LatihanViewModel by viewModels { LatihanViewModelFactory() }
     private var tingkat: String = "Pre-test"
     private val apiService = ApiConfig.createService<ApiService>()
 
@@ -50,10 +48,34 @@ class LatihanFragment : Fragment() {
         tingkat = arguments?.getString("tingkat") ?: "Pre-test"
         viewModel.loadSoalByTingkat(tingkat)
 
+        viewModel.isLoading.observe(viewLifecycleOwner) { loading ->
+            binding.btnSelanjutnya.isEnabled = !loading
+            binding.btnKembali.isEnabled = !loading
+            if (loading) {
+                binding.tvPertanyaan.text = "Memuat soal..."
+                binding.radioGroup.removeAllViews()
+                binding.imgSoal.visibility = View.GONE
+            }
+        }
+
+        viewModel.loadError.observe(viewLifecycleOwner) { error ->
+            error?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+                binding.tvPertanyaan.text = it
+            }
+        }
+
         viewModel.currentSoal.observe(viewLifecycleOwner) { soal ->
             binding.tvPertanyaan.text = soal.pertanyaan
 
-            if (soal.imageRes != null) {
+            if (soal.imageUrl != null && soal.imageUrl.isNotBlank()) {
+                binding.imgSoal.visibility = View.VISIBLE
+                Glide.with(this)
+                    .load(soal.imageUrl)
+                    .placeholder(R.drawable.bg_rounded_gray)
+                    .error(R.drawable.bg_rounded_gray)
+                    .into(binding.imgSoal)
+            } else if (soal.imageRes != null) {
                 binding.imgSoal.visibility = View.VISIBLE
                 binding.imgSoal.setImageResource(soal.imageRes)
             } else {
@@ -109,23 +131,25 @@ class LatihanFragment : Fragment() {
     }
 
     private fun saveNilai(score: Int) {
-        val user = StaticData.currentUser ?: return
         val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("id"))
-        val nilai = NilaiSiswa(
-            id = System.currentTimeMillis().toInt(),
-            siswaId = user.id,
-            namaSiswa = user.nama,
-            tingkat = tingkat,
-            nilai = score,
-            totalSoal = viewModel.getTotalSoal(),
-            benar = viewModel.getCorrectCount(),
-            tanggal = dateFormat.format(Date())
-        )
-        StaticData.addNilaiSiswa(nilai)
-
-        // Also save to API if logged in
-        val token = TokenManager.getToken()
         val userId = TokenManager.getUserId()
+        val userName = TokenManager.getUserName()
+
+        if (userId.isNotBlank()) {
+            val nilai = NilaiSiswa(
+                id = System.currentTimeMillis().toInt(),
+                siswaId = userId,
+                namaSiswa = userName,
+                tingkat = tingkat,
+                nilai = score,
+                totalSoal = viewModel.getTotalSoal(),
+                benar = viewModel.getCorrectCount(),
+                tanggal = dateFormat.format(Date())
+            )
+            StaticData.addNilaiSiswa(nilai)
+        }
+
+        val token = TokenManager.getToken()
         if (token.isNotBlank() && userId.isNotBlank()) {
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
@@ -137,9 +161,7 @@ class LatihanFragment : Fragment() {
                             catatan = "Benar ${viewModel.getCorrectCount()} dari ${viewModel.getTotalSoal()} - Level $tingkat"
                         )
                     )
-                } catch (_: Exception) {
-                    // Silently fail API save
-                }
+                } catch (_: Exception) {}
             }
         }
     }
@@ -153,7 +175,8 @@ class LatihanFragment : Fragment() {
     }
 
     private fun showPretestResultDialog(score: Int) {
-        val userId = StaticData.currentUser?.id ?: return
+        val userIdStr = TokenManager.getUserId()
+        val userIdInt = userIdStr.hashCode()
 
         val assignedLevel: String
         val levelMessage: String
@@ -161,23 +184,23 @@ class LatihanFragment : Fragment() {
         when {
             score >= 80 -> {
                 assignedLevel = "Sulit"
-                StaticData.unlockLevel(userId, "Mudah")
-                StaticData.unlockLevel(userId, "Sedang")
-                StaticData.unlockLevel(userId, "Sulit")
-                StaticData.setCurrentLevel(userId, "Sulit")
+                StaticData.unlockLevel(userIdInt, "Mudah")
+                StaticData.unlockLevel(userIdInt, "Sedang")
+                StaticData.unlockLevel(userIdInt, "Sulit")
+                StaticData.setCurrentLevel(userIdInt, "Sulit")
                 levelMessage = "Selamat! Nilai kamu $score.\nSistem menempatkan kamu di level Sulit!"
             }
             score >= 60 -> {
                 assignedLevel = "Sedang"
-                StaticData.unlockLevel(userId, "Mudah")
-                StaticData.unlockLevel(userId, "Sedang")
-                StaticData.setCurrentLevel(userId, "Sedang")
+                StaticData.unlockLevel(userIdInt, "Mudah")
+                StaticData.unlockLevel(userIdInt, "Sedang")
+                StaticData.setCurrentLevel(userIdInt, "Sedang")
                 levelMessage = "Bagus! Nilai kamu $score.\nSistem menempatkan kamu di level Sedang!"
             }
             else -> {
                 assignedLevel = "Mudah"
-                StaticData.unlockLevel(userId, "Mudah")
-                StaticData.setCurrentLevel(userId, "Mudah")
+                StaticData.unlockLevel(userIdInt, "Mudah")
+                StaticData.setCurrentLevel(userIdInt, "Mudah")
                 levelMessage = "Nilai kamu $score.\nSistem menempatkan kamu di level Mudah.\nAyo terus belajar!"
             }
         }
@@ -194,7 +217,8 @@ class LatihanFragment : Fragment() {
     }
 
     private fun showLevelResultDialog(score: Int) {
-        val userId = StaticData.currentUser?.id ?: return
+        val userIdStr = TokenManager.getUserId()
+        val userIdInt = userIdStr.hashCode()
 
         val nextLevel: String
         val message: String
@@ -206,8 +230,8 @@ class LatihanFragment : Fragment() {
                     "Sedang" -> "Sulit"
                     else -> "Sulit"
                 }
-                StaticData.unlockLevel(userId, newLevel)
-                StaticData.setCurrentLevel(userId, newLevel)
+                StaticData.unlockLevel(userIdInt, newLevel)
+                StaticData.setCurrentLevel(userIdInt, newLevel)
                 nextLevel = newLevel
                 if (tingkat == "Sulit") {
                     message = "Hebat! Kamu mendapat nilai $score di level Sulit!\nKamu sudah menyelesaikan semua level!"
@@ -217,7 +241,7 @@ class LatihanFragment : Fragment() {
             }
             score >= 60 -> {
                 nextLevel = tingkat
-                StaticData.setCurrentLevel(userId, tingkat)
+                StaticData.setCurrentLevel(userIdInt, tingkat)
                 message = "Bagus! Kamu mendapat nilai $score.\nKamu tetap di level $tingkat. Terus belajar!"
             }
             else -> {
@@ -226,7 +250,7 @@ class LatihanFragment : Fragment() {
                     "Sedang" -> "Mudah"
                     else -> "Mudah"
                 }
-                StaticData.setCurrentLevel(userId, downLevel)
+                StaticData.setCurrentLevel(userIdInt, downLevel)
                 nextLevel = downLevel
                 if (tingkat == "Mudah") {
                     message = "Kamu mendapat nilai $score.\nTetap di level Mudah. Ayo belajar lagi!"

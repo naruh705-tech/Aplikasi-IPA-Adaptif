@@ -133,7 +133,7 @@ class KelolaAkunFragment : Fragment() {
             setPadding(48, 32, 48, 16)
         }
 
-        val etNim = EditText(requireContext()).apply { hint = "NIM" }
+        val etNim = EditText(requireContext()).apply { hint = "NISN" }
         val etNama = EditText(requireContext()).apply { hint = "Nama Lengkap" }
         val etKelas = EditText(requireContext()).apply { hint = "Kelas" }
         val etPassword = EditText(requireContext()).apply { hint = "Password" }

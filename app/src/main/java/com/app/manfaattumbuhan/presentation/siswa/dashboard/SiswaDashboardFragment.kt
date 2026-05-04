@@ -33,8 +33,8 @@ class SiswaDashboardFragment : Fragment() {
         binding.tvGreeting.text = "Halo, ${nama.split(" ").firstOrNull() ?: nama}!"
 
         binding.cardLatihanSoal.setOnClickListener {
-            val userId = StaticData.currentUser?.id
-            val unlocked = if (userId != null) StaticData.getUnlockedLevels(userId) else emptySet()
+            val userId = TokenManager.getUserId().hashCode()
+            val unlocked = StaticData.getUnlockedLevels(userId)
             if (unlocked.contains("Mudah") || unlocked.contains("Sedang") || unlocked.contains("Sulit")) {
                 findNavController().navigate(R.id.action_dashboard_to_pilih_level)
             } else {

@@ -8,14 +8,13 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.manfaattumbuhan.R
-import com.app.manfaattumbuhan.data.repository.UserRepositoryImpl
+import com.app.manfaattumbuhan.data.local.TokenManager
+import com.app.manfaattumbuhan.data.remote.model.SiswaInfo
 import com.app.manfaattumbuhan.databinding.FragmentKelolaAkunBinding
-import com.app.manfaattumbuhan.domain.model.User
-import com.app.manfaattumbuhan.domain.usecase.GetSiswaUseCase
 import com.app.manfaattumbuhan.presentation.adapter.SiswaAdapter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -23,9 +22,7 @@ class KelolaAkunFragment : Fragment() {
 
     private var _binding: FragmentKelolaAkunBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: KelolaAkunViewModel by viewModels {
-        KelolaAkunViewModelFactory(GetSiswaUseCase(UserRepositoryImpl()))
-    }
+    private lateinit var viewModel: KelolaAkunViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,17 +35,25 @@ class KelolaAkunFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        TokenManager.init(requireContext())
+        viewModel = ViewModelProvider(this)[KelolaAkunViewModel::class.java]
+
         val adapter = SiswaAdapter(
-            onEdit = { user -> showEditDialog(user) },
-            onDelete = { user -> showDeleteDialog(user) }
+            onEdit = { siswa -> showEditDialog(siswa) },
+            onDelete = { siswa -> showDeleteDialog(siswa) }
         )
         binding.rvSiswa.layoutManager = LinearLayoutManager(context)
         binding.rvSiswa.adapter = adapter
 
         viewModel.loadSiswa()
+
         viewModel.siswaList.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
             binding.tvJumlahSiswa.text = "${list.size} siswa"
+        }
+
+        viewModel.error.observe(viewLifecycleOwner) { err ->
+            err?.let { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() }
         }
 
         binding.btnLihatLaporan.setOnClickListener {
@@ -72,14 +77,13 @@ class KelolaAkunFragment : Fragment() {
             .setTitle("Tambah Siswa Baru")
             .setView(layout)
             .setPositiveButton("Simpan") { _, _ ->
-                val nama = views.etNama.text.toString()
-                val username = views.etUsername.text.toString()
-                val password = views.etPassword.text.toString()
-                val kelas = views.etKelas.text.toString()
+                val nim = views.etNim.text.toString().trim()
+                val nama = views.etNama.text.toString().trim()
+                val kelas = views.etKelas.text.toString().trim()
+                val password = views.etPassword.text.toString().trim()
 
-                if (nama.isNotBlank() && username.isNotBlank() && password.isNotBlank()) {
-                    viewModel.addSiswa(nama, username, password, kelas)
-                    Toast.makeText(context, "Siswa berhasil ditambahkan", Toast.LENGTH_SHORT).show()
+                if (nim.isNotBlank() && nama.isNotBlank() && password.isNotBlank() && kelas.isNotBlank()) {
+                    viewModel.addSiswa(nim, nama, kelas, password)
                 } else {
                     Toast.makeText(context, "Semua field wajib diisi", Toast.LENGTH_SHORT).show()
                 }
@@ -88,39 +92,36 @@ class KelolaAkunFragment : Fragment() {
             .show()
     }
 
-    private fun showEditDialog(user: User) {
+    private fun showEditDialog(siswa: SiswaInfo) {
         val layout = createUserFormLayout()
         val views = layout.tag as UserFormViews
 
-        views.etNama.setText(user.nama)
-        views.etUsername.setText(user.username)
-        views.etPassword.setText("***")
-        views.etKelas.setText(user.kelas)
+        views.etNim.setText(siswa.nim)
+        views.etNama.setText(siswa.nama)
+        views.etKelas.setText(siswa.kelas)
+        views.etPassword.hint = "Password (kosongkan jika tidak diubah)"
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Edit Siswa")
             .setView(layout)
             .setPositiveButton("Simpan") { _, _ ->
-                val nama = views.etNama.text.toString()
-                val kelas = views.etKelas.text.toString()
+                val nama = views.etNama.text.toString().trim().ifBlank { null }
+                val nim = views.etNim.text.toString().trim().ifBlank { null }
+                val kelas = views.etKelas.text.toString().trim().ifBlank { null }
+                val password = views.etPassword.text.toString().trim().ifBlank { null }
 
-                if (nama.isNotBlank()) {
-                    val updatedUser = user.copy(nama = nama, kelas = kelas)
-                    viewModel.updateSiswa(updatedUser)
-                    Toast.makeText(context, "Siswa berhasil diperbarui", Toast.LENGTH_SHORT).show()
-                }
+                viewModel.updateSiswa(siswa.id, nama, nim, kelas, password)
             }
             .setNegativeButton("Batal", null)
             .show()
     }
 
-    private fun showDeleteDialog(user: User) {
+    private fun showDeleteDialog(siswa: SiswaInfo) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Hapus Siswa")
-            .setMessage("Apakah Anda yakin ingin menghapus ${user.nama}?")
+            .setMessage("Apakah Anda yakin ingin menghapus ${siswa.nama}?")
             .setPositiveButton("Hapus") { _, _ ->
-                viewModel.deleteSiswa(user.id)
-                Toast.makeText(context, "Siswa berhasil dihapus", Toast.LENGTH_SHORT).show()
+                viewModel.deleteSiswa(siswa.id)
             }
             .setNegativeButton("Batal", null)
             .show()
@@ -132,26 +133,26 @@ class KelolaAkunFragment : Fragment() {
             setPadding(48, 32, 48, 16)
         }
 
+        val etNim = EditText(requireContext()).apply { hint = "NISN" }
         val etNama = EditText(requireContext()).apply { hint = "Nama Lengkap" }
-        val etUsername = EditText(requireContext()).apply { hint = "Username" }
-        val etPassword = EditText(requireContext()).apply { hint = "Password" }
         val etKelas = EditText(requireContext()).apply { hint = "Kelas" }
+        val etPassword = EditText(requireContext()).apply { hint = "Password" }
 
+        layout.addView(etNim)
         layout.addView(etNama)
-        layout.addView(etUsername)
-        layout.addView(etPassword)
         layout.addView(etKelas)
+        layout.addView(etPassword)
 
-        layout.tag = UserFormViews(etNama, etUsername, etPassword, etKelas)
+        layout.tag = UserFormViews(etNim, etNama, etKelas, etPassword)
 
         return layout
     }
 
     private data class UserFormViews(
+        val etNim: EditText,
         val etNama: EditText,
-        val etUsername: EditText,
-        val etPassword: EditText,
-        val etKelas: EditText
+        val etKelas: EditText,
+        val etPassword: EditText
     )
 
     override fun onDestroyView() {

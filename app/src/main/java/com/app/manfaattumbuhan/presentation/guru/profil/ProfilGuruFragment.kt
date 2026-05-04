@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.databinding.FragmentProfilGuruBinding
 import com.app.manfaattumbuhan.presentation.login.LoginActivity
 
@@ -26,11 +27,14 @@ class ProfilGuruFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        TokenManager.init(requireContext())
+
         binding.btnKembali.setOnClickListener {
             findNavController().navigateUp()
         }
 
         binding.btnLogout.setOnClickListener {
+            TokenManager.clear()
             val intent = Intent(requireContext(), LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)

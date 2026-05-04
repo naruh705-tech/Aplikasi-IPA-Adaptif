@@ -6,9 +6,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.app.manfaattumbuhan.databinding.ItemLaporanBinding
-import com.app.manfaattumbuhan.domain.model.NilaiSiswa
+import com.app.manfaattumbuhan.presentation.guru.laporan.LaporanItem
 
-class LaporanAdapter : ListAdapter<NilaiSiswa, LaporanAdapter.ViewHolder>(DiffCallback()) {
+class LaporanAdapter : ListAdapter<LaporanItem, LaporanAdapter.ViewHolder>(DiffCallback()) {
 
     class ViewHolder(val binding: ItemLaporanBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -21,15 +21,15 @@ class LaporanAdapter : ListAdapter<NilaiSiswa, LaporanAdapter.ViewHolder>(DiffCa
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position)
-        holder.binding.tvNamaSiswa.text = item.namaSiswa
-        holder.binding.tvTingkat.text = "Level: ${item.tingkat}"
-        holder.binding.tvTanggal.text = item.tanggal
-        holder.binding.tvNilai.text = item.nilai.toString()
-        holder.binding.tvDetail.text = "${item.benar}/${item.totalSoal}"
+        holder.binding.tvNamaSiswa.text = item.siswa.nama
+        holder.binding.tvTingkat.text = "Kelas: ${item.siswa.kelas}"
+        holder.binding.tvTanggal.text = "NISN: ${item.siswa.nim}"
+        holder.binding.tvNilai.text = String.format("%.0f", item.rataRata)
+        holder.binding.tvDetail.text = "${item.nilaiList.size} nilai"
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<NilaiSiswa>() {
-        override fun areItemsTheSame(oldItem: NilaiSiswa, newItem: NilaiSiswa) = oldItem.id == newItem.id
-        override fun areContentsTheSame(oldItem: NilaiSiswa, newItem: NilaiSiswa) = oldItem == newItem
+    class DiffCallback : DiffUtil.ItemCallback<LaporanItem>() {
+        override fun areItemsTheSame(oldItem: LaporanItem, newItem: LaporanItem) = oldItem.siswa.id == newItem.siswa.id
+        override fun areContentsTheSame(oldItem: LaporanItem, newItem: LaporanItem) = oldItem == newItem
     }
 }

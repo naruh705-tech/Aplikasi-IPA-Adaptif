@@ -5,10 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.app.manfaattumbuhan.data.remote.model.NilaiApi
 import com.app.manfaattumbuhan.databinding.ItemRiwayatNilaiBinding
-import com.app.manfaattumbuhan.domain.model.NilaiSiswa
 
-class RiwayatNilaiAdapter : ListAdapter<NilaiSiswa, RiwayatNilaiAdapter.ViewHolder>(DiffCallback()) {
+class RiwayatNilaiAdapter : ListAdapter<NilaiApi, RiwayatNilaiAdapter.ViewHolder>(DiffCallback()) {
 
     class ViewHolder(val binding: ItemRiwayatNilaiBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -21,14 +21,14 @@ class RiwayatNilaiAdapter : ListAdapter<NilaiSiswa, RiwayatNilaiAdapter.ViewHold
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position)
-        holder.binding.tvTingkat.text = item.tingkat
-        holder.binding.tvDetail.text = "Benar ${item.benar} dari ${item.totalSoal} soal"
-        holder.binding.tvTanggal.text = item.tanggal
-        holder.binding.tvNilai.text = item.nilai.toString()
+        holder.binding.tvTingkat.text = item.soal?.judul ?: "Soal"
+        holder.binding.tvDetail.text = item.catatan ?: "-"
+        holder.binding.tvTanggal.text = item.created_at?.take(10) ?: "-"
+        holder.binding.tvNilai.text = String.format("%.0f", item.nilai)
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<NilaiSiswa>() {
-        override fun areItemsTheSame(oldItem: NilaiSiswa, newItem: NilaiSiswa) = oldItem.id == newItem.id
-        override fun areContentsTheSame(oldItem: NilaiSiswa, newItem: NilaiSiswa) = oldItem == newItem
+    class DiffCallback : DiffUtil.ItemCallback<NilaiApi>() {
+        override fun areItemsTheSame(oldItem: NilaiApi, newItem: NilaiApi) = oldItem.id == newItem.id
+        override fun areContentsTheSame(oldItem: NilaiApi, newItem: NilaiApi) = oldItem == newItem
     }
 }

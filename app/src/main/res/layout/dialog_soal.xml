@@ -23,34 +23,98 @@
                 android:minLines="2" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- Foto Upload Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Foto Soal (opsional)"
+            android:textColor="@color/green_dark"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:layout_marginTop="8dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etFotoUrl"
+            <ImageView
+                android:id="@+id/imgPreviewFoto"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="URL Foto Soal (opsional)"
-                android:inputType="textUri" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="150dp"
+                android:background="@drawable/bg_rounded_gray"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPilihFoto"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="📷 Pilih Foto dari Galeri"
+                android:textColor="@color/green_primary"
+                app:cornerRadius="12dp"
+                app:strokeColor="@color/green_primary"
+                xmlns:app="http://schemas.android.com/apk/res-auto" />
+        </FrameLayout>
+
+        <ProgressBar
+            android:id="@+id/progressFoto"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:layout_gravity="center"
+            android:layout_marginTop="4dp"
+            android:visibility="gone" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etVideoUrl"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="URL Video Soal (opsional)"
-                android:inputType="textUri" />
-        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/tvFotoStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/green_primary"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
+        <!-- Video Upload Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Video Soal (opsional)"
+            android:textColor="@color/green_dark"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPilihVideo"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="🎬 Pilih Video dari Galeri"
+            android:textColor="@color/green_primary"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/green_primary"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <ProgressBar
+            android:id="@+id/progressVideo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="4dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvVideoStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/green_primary"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <!-- Pilihan Jawaban -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

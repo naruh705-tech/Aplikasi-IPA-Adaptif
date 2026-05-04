@@ -1,20 +1,25 @@
 package com.app.manfaattumbuhan.presentation.siswa.profil
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.app.manfaattumbuhan.R
 import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.data.remote.ApiConfig
 import com.app.manfaattumbuhan.data.remote.ApiService
+import com.app.manfaattumbuhan.data.remote.FileUploadHelper
 import com.app.manfaattumbuhan.data.remote.model.UpdateProfilRequest
 import com.app.manfaattumbuhan.databinding.FragmentProfilBinding
 import com.app.manfaattumbuhan.presentation.login.LoginActivity
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
 
 class ProfilFragment : Fragment() {
@@ -22,6 +27,17 @@ class ProfilFragment : Fragment() {
     private var _binding: FragmentProfilBinding? = null
     private val binding get() = _binding!!
     private val apiService = ApiConfig.createService<ApiService>()
+    private var uploadedFotoUrl: String? = null
+
+    private lateinit var pickFotoLauncher: ActivityResultLauncher<String>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        pickFotoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let { handleFotoSelected(it) }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -37,6 +53,10 @@ class ProfilFragment : Fragment() {
         TokenManager.init(requireContext())
 
         loadProfilData()
+
+        binding.btnPilihFotoProfil.setOnClickListener {
+            pickFotoLauncher.launch("image/*")
+        }
 
         binding.btnSimpanProfil.setOnClickListener {
             simpanProfil()
@@ -65,10 +85,36 @@ class ProfilFragment : Fragment() {
         binding.tvLabelStreak.text = "Beruntun"
     }
 
+    private fun handleFotoSelected(uri: Uri) {
+        Glide.with(this).load(uri).into(binding.imgAvatar)
+
+        binding.btnPilihFotoProfil.visibility = View.GONE
+        binding.progressFotoProfil.visibility = View.VISIBLE
+        binding.tvFotoProfilStatus.visibility = View.VISIBLE
+        binding.tvFotoProfilStatus.text = "Mengupload foto..."
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = FileUploadHelper.uploadFile(requireContext(), uri, "foto")
+            binding.progressFotoProfil.visibility = View.GONE
+            binding.btnPilihFotoProfil.visibility = View.VISIBLE
+            result.onSuccess { uploadResponse ->
+                uploadedFotoUrl = uploadResponse.url
+                binding.tvFotoProfilStatus.text = "Foto berhasil diupload"
+                binding.btnPilihFotoProfil.text = "Ganti Foto Profil"
+            }
+            result.onFailure { error ->
+                uploadedFotoUrl = null
+                binding.tvFotoProfilStatus.text = "Gagal upload: ${error.message}"
+                binding.tvFotoProfilStatus.setTextColor(resources.getColor(R.color.red_button, null))
+                binding.imgAvatar.setImageResource(R.drawable.avatar_siswa)
+            }
+        }
+    }
+
     private fun simpanProfil() {
         val nama = binding.etEditNama.text.toString().trim().ifBlank { null }
         val password = binding.etEditPassword.text.toString().trim().ifBlank { null }
-        val fotoProfil = binding.etEditFoto.text.toString().trim().ifBlank { null }
+        val fotoProfil = uploadedFotoUrl
 
         if (nama == null && password == null && fotoProfil == null) {
             Toast.makeText(requireContext(), "Tidak ada perubahan", Toast.LENGTH_SHORT).show()
@@ -102,6 +148,9 @@ class ProfilFragment : Fragment() {
                     )
                     loadProfilData()
                     binding.etEditPassword.setText("")
+                    uploadedFotoUrl = null
+                    binding.tvFotoProfilStatus.visibility = View.GONE
+                    binding.btnPilihFotoProfil.text = "Pilih Foto Profil"
                     Toast.makeText(requireContext(), "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(

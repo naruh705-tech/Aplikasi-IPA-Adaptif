@@ -260,19 +260,36 @@
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPilihFotoProfil"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_marginTop="8dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:text="Pilih Foto Profil"
+            android:textColor="@color/green_primary"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_camera"
+            app:iconGravity="textStart"
+            app:iconTint="@color/green_primary"
+            app:strokeColor="@color/green_primary" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEditFoto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="URL Foto Profil (opsional)"
-                android:inputType="textUri" />
-        </com.google.android.material.textfield.TextInputLayout>
+        <ProgressBar
+            android:id="@+id/progressFotoProfil"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="4dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvFotoProfilStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/green_primary"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSimpanProfil"

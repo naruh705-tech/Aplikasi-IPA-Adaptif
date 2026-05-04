@@ -3,11 +3,17 @@ package com.app.manfaattumbuhan.presentation.login
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.app.manfaattumbuhan.domain.model.User
+import androidx.lifecycle.viewModelScope
+import com.app.manfaattumbuhan.data.remote.ApiConfig
+import com.app.manfaattumbuhan.data.remote.ApiService
+import com.app.manfaattumbuhan.data.remote.model.LoginGuruRequest
+import com.app.manfaattumbuhan.data.remote.model.LoginSiswaRequest
 import com.app.manfaattumbuhan.domain.model.UserRole
-import com.app.manfaattumbuhan.domain.usecase.LoginUseCase
+import kotlinx.coroutines.launch
 
-class LoginViewModel(private val loginUseCase: LoginUseCase) : ViewModel() {
+class LoginViewModel : ViewModel() {
+
+    private val apiService = ApiConfig.createService<ApiService>()
 
     private val _loginResult = MutableLiveData<LoginResult>()
     val loginResult: LiveData<LoginResult> = _loginResult
@@ -15,25 +21,80 @@ class LoginViewModel(private val loginUseCase: LoginUseCase) : ViewModel() {
     private val _selectedRole = MutableLiveData<UserRole>()
     val selectedRole: LiveData<UserRole> = _selectedRole
 
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
+
     fun selectRole(role: UserRole) {
         _selectedRole.value = role
     }
 
-    fun login(username: String, password: String) {
-        if (username.isBlank() || password.isBlank()) {
-            _loginResult.value = LoginResult.Error("Username dan password harus diisi")
+    fun login(identifier: String, password: String) {
+        if (identifier.isBlank() || password.isBlank()) {
+            _loginResult.value = LoginResult.Error("Semua field harus diisi")
             return
         }
-        val user = loginUseCase.execute(username, password)
-        if (user != null) {
-            _loginResult.value = LoginResult.Success(user)
+
+        val role = _selectedRole.value
+        if (role == null) {
+            _loginResult.value = LoginResult.Error("Pilih peran terlebih dahulu")
+            return
+        }
+
+        _isLoading.value = true
+
+        viewModelScope.launch {
+            try {
+                when (role) {
+                    UserRole.GURU -> loginGuru(identifier, password)
+                    UserRole.SISWA -> loginSiswa(identifier, password)
+                }
+            } catch (e: Exception) {
+                _loginResult.postValue(LoginResult.Error("Gagal terhubung ke server: ${e.message}"))
+            } finally {
+                _isLoading.postValue(false)
+            }
+        }
+    }
+
+    private suspend fun loginGuru(nama: String, password: String) {
+        val response = apiService.loginGuru(LoginGuruRequest(nama, password))
+        if (response.isSuccessful && response.body()?.success == true) {
+            val data = response.body()!!.data!!
+            _loginResult.postValue(
+                LoginResult.GuruSuccess(
+                    token = data.token,
+                    id = data.guru.id,
+                    nama = data.guru.nama
+                )
+            )
         } else {
-            _loginResult.value = LoginResult.Error("Username atau password salah")
+            val errorMsg = response.body()?.message ?: "Login gagal"
+            _loginResult.postValue(LoginResult.Error(errorMsg))
+        }
+    }
+
+    private suspend fun loginSiswa(nim: String, password: String) {
+        val response = apiService.loginSiswa(LoginSiswaRequest(nim, password))
+        if (response.isSuccessful && response.body()?.success == true) {
+            val data = response.body()!!.data!!
+            _loginResult.postValue(
+                LoginResult.SiswaSuccess(
+                    token = data.token,
+                    id = data.siswa.id,
+                    nama = data.siswa.nama,
+                    nim = data.siswa.nim,
+                    kelas = data.siswa.kelas
+                )
+            )
+        } else {
+            val errorMsg = response.body()?.message ?: "Login gagal"
+            _loginResult.postValue(LoginResult.Error(errorMsg))
         }
     }
 }
 
 sealed class LoginResult {
-    data class Success(val user: User) : LoginResult()
+    data class GuruSuccess(val token: String, val id: String, val nama: String) : LoginResult()
+    data class SiswaSuccess(val token: String, val id: String, val nama: String, val nim: String, val kelas: String) : LoginResult()
     data class Error(val message: String) : LoginResult()
 }

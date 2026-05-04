@@ -14,17 +14,7 @@
         <action
             android:id="@+id/action_soal_to_profil"
             app:destination="@id/profilGuruFragment" />
-
-        <action
-            android:id="@+id/action_soal_to_soalList"
-            app:destination="@id/kelolaSoalListFragment" />
     </fragment>
-
-    <fragment
-        android:id="@+id/kelolaSoalListFragment"
-        android:name="com.app.manfaattumbuhan.presentation.guru.soal.KelolaSoalListFragment"
-        android:label="Daftar Soal"
-        tools:layout="@layout/fragment_kelola_soal_list" />
 
     <fragment
         android:id="@+id/kelolaAkunFragment"

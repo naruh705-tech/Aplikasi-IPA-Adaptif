@@ -1,7 +1,10 @@
 package com.app.manfaattumbuhan.presentation.guru.soal
 
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -50,7 +53,7 @@ class KelolaSoalFragment : Fragment() {
     private var currentVideoButton: View? = null
 
     private lateinit var pickFotoLauncher: ActivityResultLauncher<String>
-    private lateinit var pickVideoLauncher: ActivityResultLauncher<String>
+    private lateinit var pickVideoLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,8 +62,10 @@ class KelolaSoalFragment : Fragment() {
             uri?.let { handleFotoSelected(it) }
         }
 
-        pickVideoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            uri?.let { handleVideoSelected(it) }
+        pickVideoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { handleVideoSelected(it) }
+            }
         }
     }
 
@@ -240,7 +245,9 @@ class KelolaSoalFragment : Fragment() {
         }
 
         btnPilihVideo.setOnClickListener {
-            pickVideoLauncher.launch("video/*")
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            intent.type = "video/*"
+            pickVideoLauncher.launch(intent)
         }
 
         AlertDialog.Builder(requireContext())
@@ -332,7 +339,9 @@ class KelolaSoalFragment : Fragment() {
         }
 
         btnPilihVideo.setOnClickListener {
-            pickVideoLauncher.launch("video/*")
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            intent.type = "video/*"
+            pickVideoLauncher.launch(intent)
         }
 
         AlertDialog.Builder(requireContext())

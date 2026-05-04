@@ -3,6 +3,7 @@ package com.app.manfaattumbuhan.data.remote
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
 import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.data.remote.model.UploadResponse
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +26,7 @@ object FileUploadHelper {
             val file = uriToFile(context, uri)
             val token = TokenManager.getToken()
 
-            val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+            val mimeType = getMimeType(context, uri, file.name)
             val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
             val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
             val typePart = type.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -41,6 +42,21 @@ object FileUploadHelper {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun getMimeType(context: Context, uri: Uri, fileName: String): String {
+        var mimeType = context.contentResolver.getType(uri)
+        if (mimeType == null || mimeType == "application/octet-stream") {
+            val extension = MimeTypeMap.getFileExtensionFromUrl(fileName)
+                ?: fileName.substringAfterLast('.', "")
+            if (extension.isNotBlank()) {
+                val fromExtension = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.lowercase())
+                if (fromExtension != null) {
+                    mimeType = fromExtension
+                }
+            }
+        }
+        return mimeType ?: "application/octet-stream"
     }
 
     private fun uriToFile(context: Context, uri: Uri): File {

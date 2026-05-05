@@ -17,6 +17,8 @@ import java.io.FileOutputStream
 
 object FileUploadHelper {
 
+    private const val MAX_FILE_SIZE = 4 * 1024 * 1024L // 4MB - Vercel limit
+
     suspend fun uploadFile(
         context: Context,
         uri: Uri,
@@ -25,6 +27,13 @@ object FileUploadHelper {
         try {
             val file = uriToFile(context, uri)
             val token = TokenManager.getToken()
+
+            val fileSizeMB = file.length() / (1024.0 * 1024.0)
+            if (file.length() > MAX_FILE_SIZE) {
+                return@withContext Result.failure(
+                    Exception("Ukuran file terlalu besar (%.1f MB). Maksimal 4 MB. Silakan gunakan file yang lebih kecil.".format(fileSizeMB))
+                )
+            }
 
             val mimeType = getMimeType(context, uri, file.name, type)
             val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
@@ -37,7 +46,12 @@ object FileUploadHelper {
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()!!.data!!)
             } else {
-                Result.failure(Exception(response.body()?.message ?: "Upload gagal"))
+                val errorMsg = try {
+                    response.body()?.message ?: response.errorBody()?.string() ?: "Upload gagal"
+                } catch (e: Exception) {
+                    "Upload gagal (HTTP ${response.code()})"
+                }
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)

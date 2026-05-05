@@ -53,6 +53,16 @@ class LatihanFragment : Fragment() {
         tingkat = arguments?.getString("tingkat") ?: "Pre-test"
         viewModel.loadSoalByTingkat(tingkat)
 
+        // Set tingkat label
+        binding.tvTingkatLabel.text = tingkat
+        binding.tvMotivasi.text = when (tingkat) {
+            "Pre-test" -> "Sedikit lagi!"
+            "Mudah" -> "Level Mudah"
+            "Sedang" -> "Level Sedang"
+            "Sulit" -> "Level Sulit"
+            else -> "Ayo semangat!"
+        }
+
         viewModel.isLoading.observe(viewLifecycleOwner) { loading ->
             binding.btnSelanjutnya.isEnabled = !loading
             binding.btnKembali.isEnabled = !loading

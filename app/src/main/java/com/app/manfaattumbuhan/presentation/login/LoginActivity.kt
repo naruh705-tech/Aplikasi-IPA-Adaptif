@@ -60,7 +60,7 @@ class LoginActivity : AppCompatActivity() {
                     binding.cardSiswa.strokeColor = getColor(R.color.gray_border)
                     binding.cardSiswa.strokeWidth = 2
                     binding.layoutLoginForm.visibility = View.VISIBLE
-                    binding.etUsername.hint = "Nama"
+                    binding.etUsername.hint = "Username"
                 }
                 else -> {}
             }

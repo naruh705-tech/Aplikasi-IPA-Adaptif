@@ -2,6 +2,7 @@ package com.app.manfaattumbuhan.presentation.guru.soal
 
 import android.app.Activity
 import android.content.Intent
+import android.widget.MediaController
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -15,6 +16,7 @@ import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.VideoView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -51,6 +53,7 @@ class KelolaSoalFragment : Fragment() {
     private var currentVideoProgress: ProgressBar? = null
     private var currentVideoStatus: TextView? = null
     private var currentVideoButton: View? = null
+    private var currentVideoPreview: VideoView? = null
 
     private lateinit var pickFotoLauncher: ActivityResultLauncher<String>
     private lateinit var pickVideoLauncher: ActivityResultLauncher<Intent>
@@ -188,6 +191,12 @@ class KelolaSoalFragment : Fragment() {
     }
 
     private fun handleVideoSelected(uri: Uri) {
+        currentVideoPreview?.let { preview ->
+            preview.visibility = View.VISIBLE
+            preview.setVideoURI(uri)
+            preview.setMediaController(MediaController(requireContext()).also { it.setAnchorView(preview) })
+            preview.start()
+        }
         currentVideoButton?.visibility = View.GONE
         currentVideoProgress?.visibility = View.VISIBLE
         currentVideoStatus?.visibility = View.VISIBLE
@@ -201,12 +210,19 @@ class KelolaSoalFragment : Fragment() {
                 currentVideoStatus?.text = "Video berhasil diupload"
                 currentVideoButton?.visibility = View.VISIBLE
                 (currentVideoButton as? com.google.android.material.button.MaterialButton)?.text = "Ganti Video"
+                currentVideoPreview?.let { preview ->
+                    preview.visibility = View.VISIBLE
+                    preview.setVideoURI(Uri.parse(uploadResponse.url))
+                    preview.setMediaController(MediaController(requireContext()).also { it.setAnchorView(preview) })
+                    preview.start()
+                }
             }
             result.onFailure { error ->
                 uploadedVideoUrl = null
                 currentVideoStatus?.text = "Gagal upload: ${error.message}"
                 currentVideoStatus?.setTextColor(resources.getColor(R.color.red_button, null))
                 currentVideoButton?.visibility = View.VISIBLE
+                currentVideoPreview?.visibility = View.GONE
             }
         }
     }
@@ -224,6 +240,7 @@ class KelolaSoalFragment : Fragment() {
         val tvFotoStatus = dialogView.findViewById<TextView>(R.id.tvFotoStatus)
         val progressVideo = dialogView.findViewById<ProgressBar>(R.id.progressVideo)
         val tvVideoStatus = dialogView.findViewById<TextView>(R.id.tvVideoStatus)
+        val videoPreview = dialogView.findViewById<VideoView>(R.id.videoPreview)
         val etPilihanA = dialogView.findViewById<EditText>(R.id.etPilihanA)
         val etPilihanB = dialogView.findViewById<EditText>(R.id.etPilihanB)
         val etPilihanC = dialogView.findViewById<EditText>(R.id.etPilihanC)
@@ -237,6 +254,7 @@ class KelolaSoalFragment : Fragment() {
         currentVideoProgress = progressVideo
         currentVideoStatus = tvVideoStatus
         currentVideoButton = btnPilihVideo
+        currentVideoPreview = videoPreview
 
         setupSpinner(spinnerJawaban)
 
@@ -260,11 +278,6 @@ class KelolaSoalFragment : Fragment() {
                 val pilihanC = etPilihanC.text.toString().trim()
                 val pilihanD = etPilihanD.text.toString().trim()
                 val jawabanBenar = spinnerJawaban.selectedItemPosition
-
-                if (judul.isBlank()) {
-                    Toast.makeText(requireContext(), "Teks soal harus diisi", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
 
                 val pilihan = listOf(pilihanA, pilihanB, pilihanC, pilihanD).filter { it.isNotBlank() }
                 if (pilihan.size < 2) {
@@ -292,6 +305,7 @@ class KelolaSoalFragment : Fragment() {
         val tvFotoStatus = dialogView.findViewById<TextView>(R.id.tvFotoStatus)
         val progressVideo = dialogView.findViewById<ProgressBar>(R.id.progressVideo)
         val tvVideoStatus = dialogView.findViewById<TextView>(R.id.tvVideoStatus)
+        val videoPreviewEdit = dialogView.findViewById<VideoView>(R.id.videoPreview)
         val etPilihanA = dialogView.findViewById<EditText>(R.id.etPilihanA)
         val etPilihanB = dialogView.findViewById<EditText>(R.id.etPilihanB)
         val etPilihanC = dialogView.findViewById<EditText>(R.id.etPilihanC)
@@ -305,6 +319,7 @@ class KelolaSoalFragment : Fragment() {
         currentVideoProgress = progressVideo
         currentVideoStatus = tvVideoStatus
         currentVideoButton = btnPilihVideo
+        currentVideoPreview = videoPreviewEdit
 
         etJudul.setText(soal.judul)
 
@@ -317,6 +332,10 @@ class KelolaSoalFragment : Fragment() {
         }
 
         if (!soal.video_url.isNullOrBlank()) {
+            videoPreviewEdit.visibility = View.VISIBLE
+            videoPreviewEdit.setVideoURI(Uri.parse(soal.video_url))
+            videoPreviewEdit.setMediaController(MediaController(requireContext()).also { it.setAnchorView(videoPreviewEdit) })
+            videoPreviewEdit.start()
             btnPilihVideo.text = "Ganti Video"
             tvVideoStatus.visibility = View.VISIBLE
             tvVideoStatus.text = "Video sudah ada"
@@ -354,11 +373,6 @@ class KelolaSoalFragment : Fragment() {
                 val pilihanC = etPilihanC.text.toString().trim()
                 val pilihanD = etPilihanD.text.toString().trim()
                 val jawabanBenar = spinnerJawaban.selectedItemPosition
-
-                if (judul.isBlank()) {
-                    Toast.makeText(requireContext(), "Teks soal harus diisi", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
 
                 val pilihan = listOf(pilihanA, pilihanB, pilihanC, pilihanD).filter { it.isNotBlank() }
                 if (pilihan.size < 2) {

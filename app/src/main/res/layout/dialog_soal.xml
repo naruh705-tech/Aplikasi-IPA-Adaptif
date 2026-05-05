@@ -18,7 +18,7 @@
                 android:id="@+id/etJudul"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Teks Soal / Pertanyaan"
+                android:hint="Teks Soal / Pertanyaan (opsional)"
                 android:inputType="textMultiLine"
                 android:minLines="2" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -84,6 +84,13 @@
             android:textColor="@color/green_dark"
             android:textSize="14sp"
             android:textStyle="bold" />
+
+        <VideoView
+            android:id="@+id/videoPreview"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnPilihVideo"

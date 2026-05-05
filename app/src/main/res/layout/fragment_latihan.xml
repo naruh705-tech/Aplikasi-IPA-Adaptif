@@ -125,12 +125,17 @@
                 android:scaleType="centerCrop"
                 android:visibility="gone" />
 
-            <VideoView
-                android:id="@+id/videoSoal"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPlayVideo"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="48dp"
                 android:layout_marginTop="12dp"
-                android:visibility="gone" />
+                android:text="▶ Putar Video Soal"
+                android:textColor="@color/green_primary"
+                android:visibility="gone"
+                app:cornerRadius="12dp"
+                app:strokeColor="@color/green_primary" />
 
             <TextView
                 android:id="@+id/tvPertanyaan"

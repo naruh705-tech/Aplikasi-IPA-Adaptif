@@ -196,6 +196,9 @@ object StaticData {
     // Current assigned level per user
     val currentLevels = mutableMapOf<Int, String>()
 
+    // Fuzzy output value per user (used as "tingkat kesulitan sebelumnya" input)
+    val fuzzyOutputValues = mutableMapOf<Int, Double>()
+
     // Riwayat nilai siswa
     val nilaiSiswaList = mutableListOf<NilaiSiswa>()
 
@@ -215,6 +218,14 @@ object StaticData {
 
     fun getCurrentLevel(userId: Int): String? {
         return currentLevels[userId]
+    }
+
+    fun setFuzzyOutputValue(userId: Int, value: Double) {
+        fuzzyOutputValues[userId] = value
+    }
+
+    fun getFuzzyOutputValue(userId: Int): Double {
+        return fuzzyOutputValues[userId] ?: 0.0
     }
 
     fun addNilaiSiswa(nilai: NilaiSiswa) {

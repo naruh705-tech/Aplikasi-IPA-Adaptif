@@ -2,7 +2,6 @@ package com.app.manfaattumbuhan.presentation.guru.soal
 
 import android.app.Activity
 import android.content.Intent
-import android.widget.MediaController
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -18,6 +17,8 @@ import android.widget.TextView
 import android.widget.Toast
 import android.widget.VideoView
 import androidx.activity.result.ActivityResultLauncher
+import android.app.Dialog
+import android.view.Window
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -53,7 +54,8 @@ class KelolaSoalFragment : Fragment() {
     private var currentVideoProgress: ProgressBar? = null
     private var currentVideoStatus: TextView? = null
     private var currentVideoButton: View? = null
-    private var currentVideoPreview: VideoView? = null
+    private var currentVideoPreviewUrl: String? = null
+    private var currentBtnLihatVideo: com.google.android.material.button.MaterialButton? = null
 
     private lateinit var pickFotoLauncher: ActivityResultLauncher<String>
     private lateinit var pickVideoLauncher: ActivityResultLauncher<Intent>
@@ -191,12 +193,6 @@ class KelolaSoalFragment : Fragment() {
     }
 
     private fun handleVideoSelected(uri: Uri) {
-        currentVideoPreview?.let { preview ->
-            preview.visibility = View.VISIBLE
-            preview.setVideoURI(uri)
-            preview.setMediaController(MediaController(requireContext()).also { it.setAnchorView(preview) })
-            preview.start()
-        }
         currentVideoButton?.visibility = View.GONE
         currentVideoProgress?.visibility = View.VISIBLE
         currentVideoStatus?.visibility = View.VISIBLE
@@ -207,24 +203,45 @@ class KelolaSoalFragment : Fragment() {
             currentVideoProgress?.visibility = View.GONE
             result.onSuccess { uploadResponse ->
                 uploadedVideoUrl = uploadResponse.url
+                currentVideoPreviewUrl = uploadResponse.url
                 currentVideoStatus?.text = "Video berhasil diupload"
                 currentVideoButton?.visibility = View.VISIBLE
                 (currentVideoButton as? com.google.android.material.button.MaterialButton)?.text = "Ganti Video"
-                currentVideoPreview?.let { preview ->
-                    preview.visibility = View.VISIBLE
-                    preview.setVideoURI(Uri.parse(uploadResponse.url))
-                    preview.setMediaController(MediaController(requireContext()).also { it.setAnchorView(preview) })
-                    preview.start()
-                }
+                currentBtnLihatVideo?.visibility = View.VISIBLE
             }
             result.onFailure { error ->
                 uploadedVideoUrl = null
                 currentVideoStatus?.text = "Gagal upload: ${error.message}"
                 currentVideoStatus?.setTextColor(resources.getColor(R.color.red_button, null))
                 currentVideoButton?.visibility = View.VISIBLE
-                currentVideoPreview?.visibility = View.GONE
             }
         }
+    }
+
+    private fun showVideoPopup(videoUrl: String) {
+        val dialog = Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_video_player)
+
+        val videoPlayer = dialog.findViewById<VideoView>(R.id.videoPlayer)
+        val btnTutup = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnTutupVideo)
+
+        videoPlayer.setVideoURI(Uri.parse(videoUrl))
+        val mediaController = android.widget.MediaController(requireContext())
+        mediaController.setAnchorView(videoPlayer)
+        videoPlayer.setMediaController(mediaController)
+        videoPlayer.start()
+
+        btnTutup.setOnClickListener {
+            videoPlayer.stopPlayback()
+            dialog.dismiss()
+        }
+
+        dialog.setOnDismissListener {
+            videoPlayer.stopPlayback()
+        }
+
+        dialog.show()
     }
 
     private fun showCreateDialog() {
@@ -240,7 +257,7 @@ class KelolaSoalFragment : Fragment() {
         val tvFotoStatus = dialogView.findViewById<TextView>(R.id.tvFotoStatus)
         val progressVideo = dialogView.findViewById<ProgressBar>(R.id.progressVideo)
         val tvVideoStatus = dialogView.findViewById<TextView>(R.id.tvVideoStatus)
-        val videoPreview = dialogView.findViewById<VideoView>(R.id.videoPreview)
+        val btnLihatVideo = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnLihatVideo)
         val etPilihanA = dialogView.findViewById<EditText>(R.id.etPilihanA)
         val etPilihanB = dialogView.findViewById<EditText>(R.id.etPilihanB)
         val etPilihanC = dialogView.findViewById<EditText>(R.id.etPilihanC)
@@ -254,7 +271,12 @@ class KelolaSoalFragment : Fragment() {
         currentVideoProgress = progressVideo
         currentVideoStatus = tvVideoStatus
         currentVideoButton = btnPilihVideo
-        currentVideoPreview = videoPreview
+        currentBtnLihatVideo = btnLihatVideo
+        currentVideoPreviewUrl = null
+
+        btnLihatVideo.setOnClickListener {
+            currentVideoPreviewUrl?.let { url -> showVideoPopup(url) }
+        }
 
         setupSpinner(spinnerJawaban)
 
@@ -305,7 +327,7 @@ class KelolaSoalFragment : Fragment() {
         val tvFotoStatus = dialogView.findViewById<TextView>(R.id.tvFotoStatus)
         val progressVideo = dialogView.findViewById<ProgressBar>(R.id.progressVideo)
         val tvVideoStatus = dialogView.findViewById<TextView>(R.id.tvVideoStatus)
-        val videoPreviewEdit = dialogView.findViewById<VideoView>(R.id.videoPreview)
+        val btnLihatVideoEdit = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnLihatVideo)
         val etPilihanA = dialogView.findViewById<EditText>(R.id.etPilihanA)
         val etPilihanB = dialogView.findViewById<EditText>(R.id.etPilihanB)
         val etPilihanC = dialogView.findViewById<EditText>(R.id.etPilihanC)
@@ -319,7 +341,12 @@ class KelolaSoalFragment : Fragment() {
         currentVideoProgress = progressVideo
         currentVideoStatus = tvVideoStatus
         currentVideoButton = btnPilihVideo
-        currentVideoPreview = videoPreviewEdit
+        currentBtnLihatVideo = btnLihatVideoEdit
+        currentVideoPreviewUrl = soal.video_url
+
+        btnLihatVideoEdit.setOnClickListener {
+            currentVideoPreviewUrl?.let { url -> showVideoPopup(url) }
+        }
 
         etJudul.setText(soal.judul)
 
@@ -332,10 +359,7 @@ class KelolaSoalFragment : Fragment() {
         }
 
         if (!soal.video_url.isNullOrBlank()) {
-            videoPreviewEdit.visibility = View.VISIBLE
-            videoPreviewEdit.setVideoURI(Uri.parse(soal.video_url))
-            videoPreviewEdit.setMediaController(MediaController(requireContext()).also { it.setAnchorView(videoPreviewEdit) })
-            videoPreviewEdit.start()
+            btnLihatVideoEdit.visibility = View.VISIBLE
             btnPilihVideo.text = "Ganti Video"
             tvVideoStatus.visibility = View.VISIBLE
             tvVideoStatus.text = "Video sudah ada"

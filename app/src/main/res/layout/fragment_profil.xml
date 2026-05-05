@@ -221,74 +221,17 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Edit Profil Section -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Edit Profil"
-            android:textColor="@color/green_dark"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEditNama"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Nama Lengkap"
-                android:inputType="textPersonName" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:endIconMode="password_toggle">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEditPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Password Baru (kosongkan jika tidak diubah)"
-                android:inputType="textPassword" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEditFoto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="URL Foto Profil (opsional)"
-                android:inputType="textUri" />
-        </com.google.android.material.textfield.TextInputLayout>
-
+        <!-- Edit Profil Button -->
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSimpanProfil"
+            android:id="@+id/btnEditProfil"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginTop="12dp"
-            android:text="Simpan Perubahan"
+            android:layout_marginTop="24dp"
+            android:text="Edit Profil"
             app:backgroundTint="@color/green_primary"
-            app:cornerRadius="12dp" />
-
-        <ProgressBar
-            android:id="@+id/progressBarProfil"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:visibility="gone" />
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_edit"
+            app:iconGravity="textStart" />
 
         <!-- Keluar -->
         <com.google.android.material.button.MaterialButton
@@ -296,7 +239,7 @@
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:text="Keluar"
             android:textColor="@color/red_button"
             app:cornerRadius="12dp"

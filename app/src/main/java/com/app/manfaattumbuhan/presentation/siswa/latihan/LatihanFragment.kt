@@ -1,9 +1,11 @@
 package com.app.manfaattumbuhan.presentation.siswa.latihan
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.MediaController
 import android.widget.RadioButton
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -66,7 +68,12 @@ class LatihanFragment : Fragment() {
         }
 
         viewModel.currentSoal.observe(viewLifecycleOwner) { soal ->
-            binding.tvPertanyaan.text = soal.pertanyaan
+            if (soal.pertanyaan.isNotBlank()) {
+                binding.tvPertanyaan.visibility = View.VISIBLE
+                binding.tvPertanyaan.text = soal.pertanyaan
+            } else {
+                binding.tvPertanyaan.visibility = View.GONE
+            }
 
             if (soal.imageUrl != null && soal.imageUrl.isNotBlank()) {
                 binding.imgSoal.visibility = View.VISIBLE
@@ -80,6 +87,17 @@ class LatihanFragment : Fragment() {
                 binding.imgSoal.setImageResource(soal.imageRes)
             } else {
                 binding.imgSoal.visibility = View.GONE
+            }
+
+            if (soal.videoUrl != null && soal.videoUrl.isNotBlank()) {
+                binding.videoSoal.visibility = View.VISIBLE
+                binding.videoSoal.setVideoURI(Uri.parse(soal.videoUrl))
+                val mediaController = MediaController(requireContext())
+                mediaController.setAnchorView(binding.videoSoal)
+                binding.videoSoal.setMediaController(mediaController)
+                binding.videoSoal.start()
+            } else {
+                binding.videoSoal.visibility = View.GONE
             }
 
             binding.radioGroup.removeAllViews()

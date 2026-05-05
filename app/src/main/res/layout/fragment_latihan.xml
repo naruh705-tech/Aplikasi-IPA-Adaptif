@@ -125,6 +125,13 @@
                 android:scaleType="centerCrop"
                 android:visibility="gone" />
 
+            <VideoView
+                android:id="@+id/videoSoal"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="12dp"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/tvPertanyaan"
                 android:layout_width="wrap_content"

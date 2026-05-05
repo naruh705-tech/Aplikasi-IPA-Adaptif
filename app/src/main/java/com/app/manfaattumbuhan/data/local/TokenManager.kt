@@ -11,6 +11,7 @@ object TokenManager {
     private const val KEY_USER_NAME = "user_name"
     private const val KEY_USER_NIM = "user_nim"
     private const val KEY_USER_KELAS = "user_kelas"
+    private const val KEY_GURU_FOTO = "guru_foto"
 
     private lateinit var prefs: SharedPreferences
 
@@ -46,6 +47,11 @@ object TokenManager {
     fun getUserName(): String = prefs.getString(KEY_USER_NAME, "") ?: ""
     fun getUserNim(): String = prefs.getString(KEY_USER_NIM, "") ?: ""
     fun getUserKelas(): String = prefs.getString(KEY_USER_KELAS, "") ?: ""
+    fun getGuruFoto(): String = prefs.getString(KEY_GURU_FOTO, "") ?: ""
+
+    fun saveGuruFoto(url: String) {
+        prefs.edit().putString(KEY_GURU_FOTO, url).apply()
+    }
 
     fun isLoggedIn(): Boolean = getToken().isNotBlank()
 

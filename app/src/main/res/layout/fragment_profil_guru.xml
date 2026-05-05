@@ -18,6 +18,7 @@
         app:tint="@color/green_dark" />
 
     <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/imgAvatarGuru"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginTop="24dp"
@@ -140,13 +141,25 @@
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnEditProfil"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="24dp"
+        android:text="Edit Profil"
+        app:backgroundTint="@color/green_primary"
+        app:cornerRadius="12dp"
+        app:icon="@drawable/ic_edit"
+        app:iconGravity="textStart" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogout"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="12dp"
         android:text="Logout"
-        android:textColor="@color/white"
-        app:backgroundTint="@color/red_button"
-        app:cornerRadius="12dp" />
+        android:textColor="@color/red_button"
+        app:cornerRadius="12dp"
+        app:strokeColor="@color/red_button" />
 
 </LinearLayout>

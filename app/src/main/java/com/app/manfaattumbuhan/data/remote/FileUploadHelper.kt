@@ -26,7 +26,7 @@ object FileUploadHelper {
             val file = uriToFile(context, uri)
             val token = TokenManager.getToken()
 
-            val mimeType = getMimeType(context, uri, file.name)
+            val mimeType = getMimeType(context, uri, file.name, type)
             val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
             val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
             val typePart = type.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -44,8 +44,9 @@ object FileUploadHelper {
         }
     }
 
-    private fun getMimeType(context: Context, uri: Uri, fileName: String): String {
+    private fun getMimeType(context: Context, uri: Uri, fileName: String, uploadType: String): String {
         var mimeType = context.contentResolver.getType(uri)
+
         if (mimeType == null || mimeType == "application/octet-stream") {
             val extension = MimeTypeMap.getFileExtensionFromUrl(fileName)
                 ?: fileName.substringAfterLast('.', "")
@@ -56,7 +57,16 @@ object FileUploadHelper {
                 }
             }
         }
-        return mimeType ?: "application/octet-stream"
+
+        if (mimeType == null || mimeType == "application/octet-stream") {
+            mimeType = when (uploadType) {
+                "video" -> "video/mp4"
+                "foto" -> "image/jpeg"
+                else -> "application/octet-stream"
+            }
+        }
+
+        return mimeType
     }
 
     private fun uriToFile(context: Context, uri: Uri): File {

@@ -4,20 +4,29 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
-import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.data.remote.model.UploadResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 object FileUploadHelper {
 
-    private const val MAX_FILE_SIZE = 4 * 1024 * 1024L // 4MB - Vercel limit
+    private const val SUPABASE_URL = "https://nbgjggkhubmpbxmjtpgt.supabase.co"
+    private const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5iZ2pnZ2todWJtcGJ4bWp0cGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4NDg0MzIsImV4cCI6MjA2MTQyNDQzMn0.SHDsMKxkR3GovJO4FGVWqL33yn_Fmjm3nXMMOLBRD-k"
+    private const val BUCKET = "uploads"
+
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
+        .writeTimeout(120, TimeUnit.SECONDS)
+        .build()
 
     suspend fun uploadFile(
         context: Context,
@@ -26,32 +35,41 @@ object FileUploadHelper {
     ): Result<UploadResponse> = withContext(Dispatchers.IO) {
         try {
             val file = uriToFile(context, uri)
-            val token = TokenManager.getToken()
-
-            val fileSizeMB = file.length() / (1024.0 * 1024.0)
-            if (file.length() > MAX_FILE_SIZE) {
-                return@withContext Result.failure(
-                    Exception("Ukuran file terlalu besar (%.1f MB). Maksimal 4 MB. Silakan gunakan file yang lebih kecil.".format(fileSizeMB))
-                )
-            }
-
             val mimeType = getMimeType(context, uri, file.name, type)
-            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
-            val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
-            val typePart = type.toRequestBody("text/plain".toMediaTypeOrNull())
 
-            val apiService = ApiConfig.createService<ApiService>()
-            val response = apiService.uploadFile(token, filePart, typePart)
+            val folder = if (type == "video") "video" else "foto"
+            val ext = file.extension.ifBlank { if (type == "video") "mp4" else "jpg" }
+            val filename = "${UUID.randomUUID()}.$ext"
+            val filePath = "$folder/$filename"
 
-            if (response.isSuccessful && response.body()?.success == true) {
-                Result.success(response.body()!!.data!!)
+            val uploadUrl = "$SUPABASE_URL/storage/v1/object/$BUCKET/$filePath"
+
+            val requestBody = file.readBytes().toRequestBody(mimeType.toMediaTypeOrNull())
+
+            val request = Request.Builder()
+                .url(uploadUrl)
+                .post(requestBody)
+                .addHeader("apikey", SUPABASE_ANON_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_ANON_KEY")
+                .addHeader("Content-Type", mimeType)
+                .build()
+
+            val response = client.newCall(request).execute()
+
+            if (response.isSuccessful) {
+                val publicUrl = "$SUPABASE_URL/storage/v1/object/public/$BUCKET/$filePath"
+                Result.success(
+                    UploadResponse(
+                        url = publicUrl,
+                        filename = filename,
+                        type = type,
+                        original_name = file.name,
+                        size = file.length()
+                    )
+                )
             } else {
-                val errorMsg = try {
-                    response.body()?.message ?: response.errorBody()?.string() ?: "Upload gagal"
-                } catch (e: Exception) {
-                    "Upload gagal (HTTP ${response.code()})"
-                }
-                Result.failure(Exception(errorMsg))
+                val errorBody = response.body?.string() ?: "Upload gagal"
+                Result.failure(Exception("Upload gagal (${response.code}): $errorBody"))
             }
         } catch (e: Exception) {
             Result.failure(e)

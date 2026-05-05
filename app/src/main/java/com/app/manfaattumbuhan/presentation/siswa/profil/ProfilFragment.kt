@@ -1,12 +1,18 @@
 package com.app.manfaattumbuhan.presentation.siswa.profil
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageView
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -14,9 +20,11 @@ import com.app.manfaattumbuhan.R
 import com.app.manfaattumbuhan.data.local.TokenManager
 import com.app.manfaattumbuhan.data.remote.ApiConfig
 import com.app.manfaattumbuhan.data.remote.ApiService
+import com.app.manfaattumbuhan.data.remote.FileUploadHelper
 import com.app.manfaattumbuhan.data.remote.model.UpdateProfilRequest
 import com.app.manfaattumbuhan.databinding.FragmentProfilBinding
 import com.app.manfaattumbuhan.presentation.login.LoginActivity
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
 
 class ProfilFragment : Fragment() {
@@ -24,6 +32,20 @@ class ProfilFragment : Fragment() {
     private var _binding: FragmentProfilBinding? = null
     private val binding get() = _binding!!
     private val apiService = ApiConfig.createService<ApiService>()
+    private var uploadedFotoUrl: String? = null
+
+    private lateinit var pickFotoLauncher: ActivityResultLauncher<String>
+    private var dialogFotoPreview: ImageView? = null
+    private var dialogFotoProgress: ProgressBar? = null
+    private var dialogFotoStatus: TextView? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        pickFotoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let { handleFotoSelected(it) }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -66,11 +88,24 @@ class ProfilFragment : Fragment() {
     }
 
     private fun showEditProfilDialog() {
+        uploadedFotoUrl = null
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_profil_siswa, null)
         val etNama = dialogView.findViewById<EditText>(R.id.etEditNama)
         val etPassword = dialogView.findViewById<EditText>(R.id.etEditPassword)
+        val btnPilihFoto = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnPilihFotoSiswa)
+        val imgPreview = dialogView.findViewById<ImageView>(R.id.imgPreviewFotoSiswa)
+        val progressFoto = dialogView.findViewById<ProgressBar>(R.id.progressFotoSiswa)
+        val tvFotoStatus = dialogView.findViewById<TextView>(R.id.tvFotoSiswaStatus)
+
+        dialogFotoPreview = imgPreview
+        dialogFotoProgress = progressFoto
+        dialogFotoStatus = tvFotoStatus
 
         etNama.setText(TokenManager.getUserName())
+
+        btnPilihFoto.setOnClickListener {
+            pickFotoLauncher.launch("image/*")
+        }
 
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Profil")
@@ -78,19 +113,45 @@ class ProfilFragment : Fragment() {
             .setPositiveButton("Simpan") { _, _ ->
                 val nama = etNama.text.toString().trim().ifBlank { null }
                 val password = etPassword.text.toString().trim().ifBlank { null }
+                val fotoProfil = uploadedFotoUrl
 
-                if (nama == null && password == null) {
+                if (nama == null && password == null && fotoProfil == null) {
                     Toast.makeText(requireContext(), "Tidak ada perubahan", Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
-                simpanProfil(nama, password)
+                simpanProfil(nama, password, fotoProfil)
             }
             .setNegativeButton("Batal", null)
             .show()
     }
 
-    private fun simpanProfil(nama: String?, password: String?) {
+    private fun handleFotoSelected(uri: Uri) {
+        dialogFotoPreview?.let { preview ->
+            preview.visibility = View.VISIBLE
+            Glide.with(this).load(uri).into(preview)
+        }
+        dialogFotoProgress?.visibility = View.VISIBLE
+        dialogFotoStatus?.visibility = View.VISIBLE
+        dialogFotoStatus?.text = "Mengupload foto..."
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = FileUploadHelper.uploadFile(requireContext(), uri, "foto")
+            dialogFotoProgress?.visibility = View.GONE
+            result.onSuccess { uploadResponse ->
+                uploadedFotoUrl = uploadResponse.url
+                dialogFotoStatus?.text = "Foto berhasil diupload"
+            }
+            result.onFailure { error ->
+                uploadedFotoUrl = null
+                dialogFotoStatus?.text = "Gagal upload: ${error.message}"
+                dialogFotoStatus?.setTextColor(resources.getColor(R.color.red_button, null))
+                dialogFotoPreview?.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun simpanProfil(nama: String?, password: String?, fotoProfil: String?) {
         val token = TokenManager.getToken()
         val userId = TokenManager.getUserId()
         if (token.isBlank() || userId.isBlank()) {
@@ -102,7 +163,7 @@ class ProfilFragment : Fragment() {
             try {
                 val response = apiService.updateProfil(
                     token, userId,
-                    UpdateProfilRequest(nama, password)
+                    UpdateProfilRequest(nama, password, fotoProfil)
                 )
                 if (response.isSuccessful && response.body()?.success == true) {
                     val updatedSiswa = response.body()!!.data!!
@@ -114,6 +175,7 @@ class ProfilFragment : Fragment() {
                         updatedSiswa.kelas
                     )
                     loadProfilData()
+                    uploadedFotoUrl = null
                     Toast.makeText(requireContext(), "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(

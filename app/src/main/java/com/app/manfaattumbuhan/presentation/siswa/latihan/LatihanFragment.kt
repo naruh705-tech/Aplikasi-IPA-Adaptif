@@ -1,13 +1,15 @@
 package com.app.manfaattumbuhan.presentation.siswa.latihan
 
+import android.app.Dialog
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.MediaController
+import android.view.Window
 import android.widget.RadioButton
 import android.widget.Toast
+import android.widget.VideoView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -90,14 +92,12 @@ class LatihanFragment : Fragment() {
             }
 
             if (soal.videoUrl != null && soal.videoUrl.isNotBlank()) {
-                binding.videoSoal.visibility = View.VISIBLE
-                binding.videoSoal.setVideoURI(Uri.parse(soal.videoUrl))
-                val mediaController = MediaController(requireContext())
-                mediaController.setAnchorView(binding.videoSoal)
-                binding.videoSoal.setMediaController(mediaController)
-                binding.videoSoal.start()
+                binding.btnPlayVideo.visibility = View.VISIBLE
+                binding.btnPlayVideo.setOnClickListener {
+                    showVideoPopup(soal.videoUrl)
+                }
             } else {
-                binding.videoSoal.visibility = View.GONE
+                binding.btnPlayVideo.visibility = View.GONE
             }
 
             binding.radioGroup.removeAllViews()
@@ -290,6 +290,32 @@ class LatihanFragment : Fragment() {
             }
             .setCancelable(false)
             .show()
+    }
+
+    private fun showVideoPopup(videoUrl: String) {
+        val dialog = Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_video_player)
+
+        val videoPlayer = dialog.findViewById<VideoView>(R.id.videoPlayer)
+        val btnTutup = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnTutupVideo)
+
+        videoPlayer.setVideoURI(Uri.parse(videoUrl))
+        val mediaController = android.widget.MediaController(requireContext())
+        mediaController.setAnchorView(videoPlayer)
+        videoPlayer.setMediaController(mediaController)
+        videoPlayer.start()
+
+        btnTutup.setOnClickListener {
+            videoPlayer.stopPlayback()
+            dialog.dismiss()
+        }
+
+        dialog.setOnDismissListener {
+            videoPlayer.stopPlayback()
+        }
+
+        dialog.show()
     }
 
     override fun onDestroyView() {

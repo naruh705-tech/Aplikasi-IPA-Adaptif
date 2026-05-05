@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 object FileUploadHelper {
 
     private const val SUPABASE_URL = "https://nbgjggkhubmpbxmjtpgt.supabase.co"
-    private const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5iZ2pnZ2todWJtcGJ4bWp0cGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4NDg0MzIsImV4cCI6MjA2MTQyNDQzMn0.SHDsMKxkR3GovJO4FGVWqL33yn_Fmjm3nXMMOLBRD-k"
+    private const val SUPABASE_ANON_KEY = "sb_publishable_F8OA4-H6GxP7g62aMxRe8A_lB8rd4Q2"
     private const val BUCKET = "uploads"
 
     private val client = OkHttpClient.Builder()

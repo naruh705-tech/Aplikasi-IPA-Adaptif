@@ -45,6 +45,11 @@ class LatihanViewModel : ViewModel() {
 
     private var correctCount = 0
 
+    // Time tracking
+    private var startTimeMillis: Long = 0L
+    private var totalTimeMillis: Long = 0L
+    private var soalStartTimeMillis: Long = 0L
+
     fun loadSoalByTingkat(tingkat: String) {
         correctCount = 0
         _currentIndex.value = 0
@@ -52,6 +57,8 @@ class LatihanViewModel : ViewModel() {
         _selectedAnswer.value = null
         _score.value = 0
         _isLoading.value = true
+        startTimeMillis = System.currentTimeMillis()
+        totalTimeMillis = 0L
 
         viewModelScope.launch {
             try {
@@ -73,6 +80,7 @@ class LatihanViewModel : ViewModel() {
                     if (filtered.isNotEmpty()) {
                         _currentSoal.postValue(filtered[0])
                         _progress.postValue(((0 + 1) * 100) / filtered.size)
+                        soalStartTimeMillis = System.currentTimeMillis()
                     } else {
                         _loadError.postValue("Belum ada soal tersedia")
                     }
@@ -129,8 +137,10 @@ class LatihanViewModel : ViewModel() {
             _currentIndex.value = nextIdx
             _currentSoal.value = list[nextIdx]
             _selectedAnswer.value = null
+            soalStartTimeMillis = System.currentTimeMillis()
             updateProgress()
         } else {
+            totalTimeMillis = System.currentTimeMillis() - startTimeMillis
             _score.value = (correctCount * 100) / list.size
             _isFinished.value = true
         }
@@ -156,6 +166,33 @@ class LatihanViewModel : ViewModel() {
     fun getTotalSoal(): Int = _soalList.value?.size ?: 0
 
     fun getCorrectCount(): Int = correctCount
+
+    /**
+     * Get total time spent in seconds
+     */
+    fun getTotalTimeSeconds(): Double {
+        return if (totalTimeMillis > 0) {
+            totalTimeMillis / 1000.0
+        } else {
+            (System.currentTimeMillis() - startTimeMillis) / 1000.0
+        }
+    }
+
+    /**
+     * Get average time per question in seconds
+     */
+    fun getAverageTimePerSoal(): Double {
+        val total = getTotalSoal()
+        return if (total > 0) getTotalTimeSeconds() / total else 0.0
+    }
+
+    /**
+     * Get accuracy as percentage (0-100)
+     */
+    fun getKetepatanPersen(): Double {
+        val total = getTotalSoal()
+        return if (total > 0) (correctCount.toDouble() / total) * 100.0 else 0.0
+    }
 }
 
 class LatihanViewModelFactory : ViewModelProvider.Factory {

@@ -64,7 +64,11 @@ class LoginViewModel : ViewModel() {
                 LoginResult.GuruSuccess(
                     token = data.token,
                     id = data.guru.id,
-                    nama = data.guru.nama
+                    nama = data.guru.nama,
+                    nip = data.guru.nip,
+                    sekolah = data.guru.sekolah,
+                    mapel = data.guru.mapel,
+                    fotoProfil = data.guru.foto_profil
                 )
             )
         } else {
@@ -95,7 +99,15 @@ class LoginViewModel : ViewModel() {
 }
 
 sealed class LoginResult {
-    data class GuruSuccess(val token: String, val id: String, val nama: String) : LoginResult()
+    data class GuruSuccess(
+        val token: String,
+        val id: String,
+        val nama: String,
+        val nip: String? = null,
+        val sekolah: String? = null,
+        val mapel: String? = null,
+        val fotoProfil: String? = null
+    ) : LoginResult()
     data class SiswaSuccess(val token: String, val id: String, val nama: String, val nim: String, val kelas: String, val fotoProfil: String? = null) : LoginResult()
     data class Error(val message: String) : LoginResult()
 }

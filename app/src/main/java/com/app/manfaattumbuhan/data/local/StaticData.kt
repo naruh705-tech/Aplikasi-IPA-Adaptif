@@ -47,23 +47,13 @@ object StaticData {
             sekolah = "SLB Negeri Harapan",
             avatarRes = R.drawable.avatar_siswa
         ),
-        User(
-            id = 100,
-            nama = "Admin Guru",
-            username = "Admin Guru",
-            role = UserRole.GURU,
-            kelas = "",
-            sekolah = "SLB Negeri Harapan",
-            avatarRes = R.drawable.avatar_guru
-        )
     )
 
     val passwords = mutableMapOf(
         "siswa" to "siswa123",
         "andi" to "andi123",
         "citra" to "citra123",
-        "dian" to "dian123",
-        "Admin Guru" to "guru123"
+        "dian" to "dian123"
     )
 
     val tumbuhanList = listOf<Tumbuhan>()

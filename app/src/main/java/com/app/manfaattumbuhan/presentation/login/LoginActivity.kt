@@ -100,7 +100,15 @@ class LoginActivity : AppCompatActivity() {
         viewModel.loginResult.observe(this) { result ->
             when (result) {
                 is LoginResult.GuruSuccess -> {
-                    TokenManager.saveGuruLogin(result.token, result.id, result.nama)
+                    TokenManager.saveGuruLogin(
+                        token = result.token,
+                        id = result.id,
+                        nama = result.nama,
+                        nip = result.nip,
+                        sekolah = result.sekolah,
+                        mapel = result.mapel,
+                        fotoProfil = result.fotoProfil
+                    )
                     val intent = Intent(this, GuruActivity::class.java)
                     intent.putExtra("USER_NAME", result.nama)
                     intent.putExtra("USER_ID", result.id)

@@ -19,7 +19,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.app.manfaattumbuhan.R
 import com.app.manfaattumbuhan.data.local.TokenManager
+import com.app.manfaattumbuhan.data.remote.ApiConfig
+import com.app.manfaattumbuhan.data.remote.ApiService
 import com.app.manfaattumbuhan.data.remote.FileUploadHelper
+import com.app.manfaattumbuhan.data.remote.model.UpdateGuruProfilRequest
 import com.app.manfaattumbuhan.databinding.FragmentProfilGuruBinding
 import com.app.manfaattumbuhan.presentation.login.LoginActivity
 import com.bumptech.glide.Glide
@@ -29,6 +32,8 @@ class ProfilGuruFragment : Fragment() {
 
     private var _binding: FragmentProfilGuruBinding? = null
     private val binding get() = _binding!!
+
+    private val apiService = ApiConfig.createService<ApiService>()
 
     private lateinit var pickFotoLauncher: ActivityResultLauncher<String>
     private var dialogFotoPreview: ImageView? = null
@@ -57,7 +62,7 @@ class ProfilGuruFragment : Fragment() {
 
         TokenManager.init(requireContext())
 
-        loadProfilData()
+        loadProfilFromApi()
 
         binding.btnKembali.setOnClickListener {
             findNavController().navigateUp()
@@ -72,11 +77,49 @@ class ProfilGuruFragment : Fragment() {
         }
     }
 
+    private fun loadProfilFromApi() {
+        loadProfilData()
+
+        val token = TokenManager.getToken()
+        if (token.isBlank()) return
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val response = apiService.getGuruProfil(token)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val guru = response.body()!!.data!!
+                    TokenManager.saveGuruInfo(
+                        nip = guru.nip ?: "",
+                        sekolah = guru.sekolah ?: "",
+                        mapel = guru.mapel ?: ""
+                    )
+                    if (!guru.foto_profil.isNullOrBlank()) {
+                        TokenManager.saveGuruFoto(guru.foto_profil)
+                    }
+                    val currentToken = TokenManager.getToken()
+                    val userId = TokenManager.getUserId()
+                    TokenManager.saveGuruLogin(
+                        token = currentToken.removePrefix("Bearer "),
+                        id = userId,
+                        nama = guru.nama,
+                        nip = guru.nip,
+                        sekolah = guru.sekolah,
+                        mapel = guru.mapel,
+                        fotoProfil = guru.foto_profil
+                    )
+                    loadProfilData()
+                }
+            } catch (_: Exception) {
+                // fallback to local data
+            }
+        }
+    }
+
     private fun loadProfilData() {
         binding.tvNamaGuru.text = TokenManager.getUserName()
-        binding.tvNipValue.text = TokenManager.getGuruNip()
-        binding.tvSekolahValue.text = TokenManager.getGuruSekolah()
-        binding.tvMapelValue.text = TokenManager.getGuruMapel()
+        binding.tvNipValue.text = TokenManager.getGuruNip().ifBlank { "-" }
+        binding.tvSekolahValue.text = TokenManager.getGuruSekolah().ifBlank { "-" }
+        binding.tvMapelValue.text = TokenManager.getGuruMapel().ifBlank { "-" }
 
         val fotoUrl = TokenManager.getGuruFoto()
         if (fotoUrl.isNotBlank()) {
@@ -91,6 +134,8 @@ class ProfilGuruFragment : Fragment() {
         val etNip = dialogView.findViewById<EditText>(R.id.etEditNipGuru)
         val etSekolah = dialogView.findViewById<EditText>(R.id.etEditSekolahGuru)
         val etMapel = dialogView.findViewById<EditText>(R.id.etEditMapelGuru)
+        val etPassword = dialogView.findViewById<EditText>(R.id.etEditPasswordGuru)
+        val etPasswordConfirm = dialogView.findViewById<EditText>(R.id.etEditPasswordConfirmGuru)
         val btnPilihFoto = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnPilihFotoGuru)
         val imgPreview = dialogView.findViewById<ImageView>(R.id.imgPreviewFotoGuru)
         val progressFoto = dialogView.findViewById<ProgressBar>(R.id.progressFotoGuru)
@@ -126,24 +171,99 @@ class ProfilGuruFragment : Fragment() {
                     return@setPositiveButton
                 }
 
-                val token = TokenManager.getToken()
-                val userId = TokenManager.getUserId()
-                TokenManager.saveGuruLogin(token.removePrefix("Bearer "), userId, nama)
+                val password = etPassword.text.toString().trim()
+                val passwordConfirm = etPasswordConfirm.text.toString().trim()
+
+                if (password.isNotBlank() && password != passwordConfirm) {
+                    Toast.makeText(requireContext(), "Password tidak cocok", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                if (password.isNotBlank() && password.length < 6) {
+                    Toast.makeText(requireContext(), "Password minimal 6 karakter", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
 
                 val nip = etNip.text.toString().trim()
                 val sekolah = etSekolah.text.toString().trim()
                 val mapel = etMapel.text.toString().trim()
-                TokenManager.saveGuruInfo(nip, sekolah, mapel)
+                val fotoUrl = uploadedFotoUrl
 
-                if (uploadedFotoUrl != null) {
-                    TokenManager.saveGuruFoto(uploadedFotoUrl!!)
-                }
-
-                loadProfilData()
-                Toast.makeText(requireContext(), "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
+                updateProfilViaApi(nama, nip, sekolah, mapel, password, fotoUrl)
             }
             .setNegativeButton("Batal", null)
             .show()
+    }
+
+    private fun updateProfilViaApi(
+        nama: String,
+        nip: String,
+        sekolah: String,
+        mapel: String,
+        password: String,
+        fotoUrl: String?
+    ) {
+        val token = TokenManager.getToken()
+        val userId = TokenManager.getUserId()
+
+        val request = UpdateGuruProfilRequest(
+            nama = nama,
+            password = if (password.isNotBlank()) password else null,
+            nip = nip.ifBlank { null },
+            sekolah = sekolah.ifBlank { null },
+            mapel = mapel.ifBlank { null },
+            foto_profil = fotoUrl
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val response = apiService.updateGuruProfil(token, request)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val guru = response.body()!!.data!!
+                    TokenManager.saveGuruLogin(
+                        token = token.removePrefix("Bearer "),
+                        id = userId,
+                        nama = guru.nama,
+                        nip = guru.nip,
+                        sekolah = guru.sekolah,
+                        mapel = guru.mapel,
+                        fotoProfil = guru.foto_profil
+                    )
+                    loadProfilData()
+                    Toast.makeText(requireContext(), "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
+                } else {
+                    saveProfilLocally(nama, nip, sekolah, mapel, fotoUrl, token, userId)
+                }
+            } catch (_: Exception) {
+                saveProfilLocally(nama, nip, sekolah, mapel, fotoUrl, token, userId)
+            }
+        }
+    }
+
+    private fun saveProfilLocally(
+        nama: String,
+        nip: String,
+        sekolah: String,
+        mapel: String,
+        fotoUrl: String?,
+        token: String,
+        userId: String
+    ) {
+        TokenManager.saveGuruLogin(
+            token = token.removePrefix("Bearer "),
+            id = userId,
+            nama = nama,
+            nip = nip,
+            sekolah = sekolah,
+            mapel = mapel,
+            fotoProfil = fotoUrl ?: TokenManager.getGuruFoto()
+        )
+        TokenManager.saveGuruInfo(nip, sekolah, mapel)
+        if (fotoUrl != null) {
+            TokenManager.saveGuruFoto(fotoUrl)
+        }
+        loadProfilData()
+        Toast.makeText(requireContext(), "Profil berhasil diperbarui (lokal)", Toast.LENGTH_SHORT).show()
     }
 
     private fun handleFotoSelected(uri: Uri) {

@@ -26,7 +26,11 @@ data class LoginGuruResponse(
 
 data class GuruInfo(
     val id: String,
-    val nama: String
+    val nama: String,
+    val nip: String? = null,
+    val sekolah: String? = null,
+    val mapel: String? = null,
+    val foto_profil: String? = null
 )
 
 data class LoginSiswaRequest(
@@ -68,6 +72,15 @@ data class UpdateSiswaRequest(
 data class UpdateProfilRequest(
     val nama: String? = null,
     val password: String? = null,
+    val foto_profil: String? = null
+)
+
+data class UpdateGuruProfilRequest(
+    val nama: String? = null,
+    val password: String? = null,
+    val nip: String? = null,
+    val sekolah: String? = null,
+    val mapel: String? = null,
     val foto_profil: String? = null
 )
 

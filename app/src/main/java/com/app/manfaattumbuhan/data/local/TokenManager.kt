@@ -27,12 +27,24 @@ object TokenManager {
         prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
 
-    fun saveGuruLogin(token: String, id: String, nama: String) {
+    fun saveGuruLogin(
+        token: String,
+        id: String,
+        nama: String,
+        nip: String? = null,
+        sekolah: String? = null,
+        mapel: String? = null,
+        fotoProfil: String? = null
+    ) {
         prefs.edit().apply {
             putString(KEY_TOKEN, "Bearer $token")
             putString(KEY_USER_ROLE, "GURU")
             putString(KEY_USER_ID, id)
             putString(KEY_USER_NAME, nama)
+            putString(KEY_GURU_NIP, nip ?: "")
+            putString(KEY_GURU_SEKOLAH, sekolah ?: "")
+            putString(KEY_GURU_MAPEL, mapel ?: "")
+            putString(KEY_GURU_FOTO, fotoProfil ?: "")
             apply()
         }
     }
@@ -58,9 +70,9 @@ object TokenManager {
     fun getUserKelas(): String = prefs.getString(KEY_USER_KELAS, "") ?: ""
     fun getGuruFoto(): String = prefs.getString(KEY_GURU_FOTO, "") ?: ""
     fun getSiswaFoto(): String = prefs.getString(KEY_SISWA_FOTO, "") ?: ""
-    fun getGuruNip(): String = prefs.getString(KEY_GURU_NIP, "198507152010012009") ?: "198507152010012009"
-    fun getGuruSekolah(): String = prefs.getString(KEY_GURU_SEKOLAH, "SLB Negeri Harapan") ?: "SLB Negeri Harapan"
-    fun getGuruMapel(): String = prefs.getString(KEY_GURU_MAPEL, "IPA") ?: "IPA"
+    fun getGuruNip(): String = prefs.getString(KEY_GURU_NIP, "") ?: ""
+    fun getGuruSekolah(): String = prefs.getString(KEY_GURU_SEKOLAH, "") ?: ""
+    fun getGuruMapel(): String = prefs.getString(KEY_GURU_MAPEL, "") ?: ""
 
     fun saveGuruFoto(url: String) {
         prefs.edit().putString(KEY_GURU_FOTO, url).apply()

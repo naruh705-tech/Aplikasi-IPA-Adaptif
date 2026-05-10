@@ -46,7 +46,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Ibu Siti Rahayu"
+        android:text="-"
         android:textColor="@color/green_dark"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -105,7 +105,7 @@
                     android:id="@+id/tvNipValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="198507152010012009"
+                    android:text="-"
                     android:textColor="@color/green_dark"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -128,7 +128,7 @@
                     android:id="@+id/tvSekolahValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="SLB Negeri Harapan"
+                    android:text="-"
                     android:textColor="@color/green_dark"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -151,7 +151,7 @@
                     android:id="@+id/tvMapelValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="IPA"
+                    android:text="-"
                     android:textColor="@color/green_dark"
                     android:textSize="14sp" />
             </LinearLayout>

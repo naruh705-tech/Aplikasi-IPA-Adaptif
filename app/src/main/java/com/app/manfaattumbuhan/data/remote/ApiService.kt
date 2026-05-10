@@ -79,6 +79,18 @@ interface ApiService {
         @Body request: CreateNilaiRequest
     ): Response<ApiResponse<NilaiApi>>
 
+    // Profil Guru
+    @GET("api/guru/profil")
+    suspend fun getGuruProfil(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<GuruInfo>>
+
+    @PATCH("api/guru/profil")
+    suspend fun updateGuruProfil(
+        @Header("Authorization") token: String,
+        @Body request: UpdateGuruProfilRequest
+    ): Response<ApiResponse<GuruInfo>>
+
     // Soal (Guru Only)
     @GET("api/guru/soal")
     suspend fun getSoalList(

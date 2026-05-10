@@ -168,7 +168,14 @@ class LatihanFragment : Fragment() {
         }
 
         binding.btnClose.setOnClickListener {
-            findNavController().navigateUp()
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Keluar Latihan")
+                .setMessage("Apakah kamu yakin ingin keluar? Progres latihan akan hilang.")
+                .setPositiveButton("Ya, Keluar") { _, _ ->
+                    findNavController().navigateUp()
+                }
+                .setNegativeButton("Batal", null)
+                .show()
         }
     }
 
@@ -288,11 +295,19 @@ class LatihanFragment : Fragment() {
 
         val videoPlayer = dialog.findViewById<VideoView>(R.id.videoPlayer)
         val btnTutup = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnTutupVideo)
+        val videoLoading = dialog.findViewById<View>(R.id.videoLoading)
 
         videoPlayer.setVideoURI(Uri.parse(videoUrl))
         val mediaController = android.widget.MediaController(requireContext())
         mediaController.setAnchorView(videoPlayer)
         videoPlayer.setMediaController(mediaController)
+        videoPlayer.setOnPreparedListener {
+            videoLoading.visibility = View.GONE
+        }
+        videoPlayer.setOnErrorListener { _, _, _ ->
+            videoLoading.visibility = View.GONE
+            false
+        }
         videoPlayer.start()
 
         btnTutup.setOnClickListener {

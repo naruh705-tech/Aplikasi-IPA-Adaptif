@@ -126,17 +126,21 @@
                 android:scaleType="centerCrop"
                 android:visibility="gone" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPlayVideo"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            <FrameLayout
+                android:id="@+id/videoContainer"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="220dp"
                 android:layout_marginTop="12dp"
-                android:text="▶ Putar Video Soal"
-                android:textColor="@color/green_primary"
-                android:visibility="gone"
-                app:cornerRadius="12dp"
-                app:strokeColor="@color/green_primary" />
+                android:background="@drawable/bg_rounded_gray"
+                android:visibility="gone">
+
+                <androidx.media3.ui.PlayerView
+                    android:id="@+id/videoPlayerInline"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:show_buffering="when_playing"
+                    app:use_controller="true" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvPertanyaan"

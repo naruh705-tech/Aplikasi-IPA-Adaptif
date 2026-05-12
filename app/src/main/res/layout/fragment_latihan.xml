@@ -119,24 +119,31 @@
             <ImageView
                 android:id="@+id/imgSoal"
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_rounded_gray"
                 android:padding="8dp"
-                android:scaleType="centerCrop"
+                android:scaleType="fitCenter"
                 android:visibility="gone" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPlayVideo"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            <FrameLayout
+                android:id="@+id/videoContainer"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="▶ Putar Video Soal"
-                android:textColor="@color/green_primary"
-                android:visibility="gone"
-                app:cornerRadius="12dp"
-                app:strokeColor="@color/green_primary" />
+                android:background="@drawable/bg_rounded_gray"
+                android:visibility="gone">
+
+                <androidx.media3.ui.PlayerView
+                    android:id="@+id/videoPlayerInline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="200dp"
+                    app:resize_mode="fit"
+                    app:show_buffering="when_playing"
+                    app:use_controller="true" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvPertanyaan"

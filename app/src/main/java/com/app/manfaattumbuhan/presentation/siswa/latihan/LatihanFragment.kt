@@ -1,16 +1,15 @@
 package com.app.manfaattumbuhan.presentation.siswa.latihan
 
-import android.app.Dialog
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
 import android.widget.RadioButton
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.fragment.app.Fragment
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -37,6 +36,7 @@ class LatihanFragment : Fragment() {
     private val viewModel: LatihanViewModel by viewModels { LatihanViewModelFactory() }
     private var tingkat: String = "Pre-test"
     private val apiService = ApiConfig.createService<ApiService>()
+    private var exoPlayer: ExoPlayer? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -107,12 +107,11 @@ class LatihanFragment : Fragment() {
             }
 
             if (soal.videoUrl != null && soal.videoUrl.isNotBlank()) {
-                binding.btnPlayVideo.visibility = View.VISIBLE
-                binding.btnPlayVideo.setOnClickListener {
-                    showVideoPopup(soal.videoUrl)
-                }
+                binding.videoContainer.visibility = View.VISIBLE
+                setupInlineVideo(soal.videoUrl)
             } else {
-                binding.btnPlayVideo.visibility = View.GONE
+                binding.videoContainer.visibility = View.GONE
+                releasePlayer()
             }
 
             binding.radioGroup.removeAllViews()
@@ -288,41 +287,26 @@ class LatihanFragment : Fragment() {
         dialogBuilder.show()
     }
 
-    private fun showVideoPopup(videoUrl: String) {
-        val dialog = Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.dialog_video_player)
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+    private fun setupInlineVideo(videoUrl: String) {
+        releasePlayer()
+        val player = ExoPlayer.Builder(requireContext()).build()
+        exoPlayer = player
+        binding.videoPlayerInline.player = player
 
-        val videoPlayer = dialog.findViewById<VideoView>(R.id.videoPlayer)
-        val btnTutup = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnTutupVideo)
-        val videoLoading = dialog.findViewById<View>(R.id.videoLoading)
+        val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+        player.setMediaItem(mediaItem)
+        player.prepare()
+        player.playWhenReady = false
+    }
 
-        videoPlayer.setVideoURI(Uri.parse(videoUrl))
-        val mediaController = android.widget.MediaController(requireContext())
-        mediaController.setAnchorView(videoPlayer)
-        videoPlayer.setMediaController(mediaController)
-        videoPlayer.setOnPreparedListener {
-            videoLoading.visibility = View.GONE
-        }
-        videoPlayer.setOnErrorListener { _, _, _ ->
-            videoLoading.visibility = View.GONE
-            false
-        }
-        videoPlayer.start()
-
-        btnTutup.setOnClickListener {
-            videoPlayer.stopPlayback()
-            dialog.dismiss()
-        }
-
-        dialog.setOnDismissListener {
-            videoPlayer.stopPlayback()
-        }
-
-        dialog.show()
+    private fun releasePlayer() {
+        exoPlayer?.release()
+        exoPlayer = null
     }
 
     override fun onDestroyView() {
+        releasePlayer()
         super.onDestroyView()
         _binding = null
     }

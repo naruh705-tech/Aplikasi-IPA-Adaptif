@@ -75,6 +75,10 @@ dependencies {
     // Glide (image loading)
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
+    // ExoPlayer (video streaming)
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 

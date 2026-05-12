@@ -156,6 +156,7 @@ data class MateriApi(
     val deskripsi: String,
     val manfaat: String,
     val gambar_url: String?,
+    val video_url: String?,
     val urutan: Int,
     val guru_id: String,
     val created_at: String?,
@@ -167,6 +168,7 @@ data class CreateMateriRequest(
     val deskripsi: String,
     val manfaat: String,
     val gambar_url: String? = null,
+    val video_url: String? = null,
     val urutan: Int = 0
 )
 
@@ -175,6 +177,7 @@ data class UpdateMateriRequest(
     val deskripsi: String? = null,
     val manfaat: String? = null,
     val gambar_url: String? = null,
+    val video_url: String? = null,
     val urutan: Int? = null
 )
 

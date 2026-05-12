@@ -44,6 +44,7 @@ class MateriFragment : Fragment() {
                 putString("tumbuhanManfaat", tumbuhan.manfaat)
                 putInt("tumbuhanImage", tumbuhan.imageRes)
                 putString("tumbuhanGambarUrl", tumbuhan.gambarUrl ?: "")
+                putString("tumbuhanVideoUrl", tumbuhan.videoUrl ?: "")
             }
             findNavController().navigate(R.id.action_materi_to_detail, bundle)
         }

@@ -119,17 +119,18 @@
             <ImageView
                 android:id="@+id/imgSoal"
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_rounded_gray"
                 android:padding="8dp"
-                android:scaleType="centerCrop"
+                android:scaleType="fitCenter"
                 android:visibility="gone" />
 
             <FrameLayout
                 android:id="@+id/videoContainer"
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_rounded_gray"
                 android:visibility="gone">
@@ -137,7 +138,9 @@
                 <androidx.media3.ui.PlayerView
                     android:id="@+id/videoPlayerInline"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="200dp"
+                    app:resize_mode="fit"
                     app:show_buffering="when_playing"
                     app:use_controller="true" />
             </FrameLayout>

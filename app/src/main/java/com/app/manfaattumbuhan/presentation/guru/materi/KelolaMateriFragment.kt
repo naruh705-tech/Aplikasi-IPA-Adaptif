@@ -1,6 +1,10 @@
 package com.app.manfaattumbuhan.presentation.guru.materi
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,18 +38,30 @@ class KelolaMateriFragment : Fragment() {
     private lateinit var adapter: MateriGuruAdapter
 
     private var uploadedGambarUrl: String? = null
+    private var uploadedVideoUrl: String? = null
     private var currentFotoPreview: ImageView? = null
     private var currentFotoProgress: ProgressBar? = null
     private var currentFotoStatus: TextView? = null
     private var currentFotoButton: View? = null
+    private var currentVideoProgress: ProgressBar? = null
+    private var currentVideoStatus: TextView? = null
+    private var currentVideoButton: View? = null
+    private var currentVideoName: TextView? = null
 
     private lateinit var pickGambarLauncher: ActivityResultLauncher<String>
+    private lateinit var pickVideoLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         pickGambarLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             uri?.let { handleGambarSelected(it) }
+        }
+
+        pickVideoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { handleVideoSelected(it) }
+            }
         }
     }
 
@@ -151,8 +167,52 @@ class KelolaMateriFragment : Fragment() {
         }
     }
 
+    private fun handleVideoSelected(uri: Uri) {
+        currentVideoButton?.visibility = View.GONE
+        currentVideoProgress?.visibility = View.VISIBLE
+        currentVideoStatus?.visibility = View.VISIBLE
+        currentVideoStatus?.text = "Mengupload video..."
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = FileUploadHelper.uploadFile(requireContext(), uri, "video")
+            currentVideoProgress?.visibility = View.GONE
+            result.onSuccess { uploadResponse ->
+                uploadedVideoUrl = uploadResponse.url
+                currentVideoStatus?.text = "Video berhasil diupload"
+                currentVideoButton?.visibility = View.VISIBLE
+                (currentVideoButton as? com.google.android.material.button.MaterialButton)?.text = "Ganti Video"
+                currentVideoName?.visibility = View.VISIBLE
+                currentVideoName?.text = uploadResponse.original_name
+            }
+            result.onFailure { error ->
+                uploadedVideoUrl = null
+                currentVideoStatus?.text = "Gagal upload: ${error.message}"
+                currentVideoButton?.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun setupVideoFields(dialogView: View) {
+        val btnPilihVideo = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnPilihVideo)
+        val progressVideo = dialogView.findViewById<ProgressBar>(R.id.progressVideo)
+        val tvVideoStatus = dialogView.findViewById<TextView>(R.id.tvVideoStatus)
+        val tvVideoName = dialogView.findViewById<TextView>(R.id.tvVideoName)
+
+        currentVideoProgress = progressVideo
+        currentVideoStatus = tvVideoStatus
+        currentVideoButton = btnPilihVideo
+        currentVideoName = tvVideoName
+
+        btnPilihVideo.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            intent.type = "video/*"
+            pickVideoLauncher.launch(intent)
+        }
+    }
+
     private fun showCreateDialog() {
         uploadedGambarUrl = null
+        uploadedVideoUrl = null
 
         val dialogView = layoutInflater.inflate(R.layout.dialog_materi, null)
         val etNama = dialogView.findViewById<EditText>(R.id.etNamaMateri)
@@ -172,6 +232,8 @@ class KelolaMateriFragment : Fragment() {
             pickGambarLauncher.launch("image/*")
         }
 
+        setupVideoFields(dialogView)
+
         AlertDialog.Builder(requireContext())
             .setTitle("Tambah Materi")
             .setView(dialogView)
@@ -187,7 +249,7 @@ class KelolaMateriFragment : Fragment() {
                     return@setPositiveButton
                 }
 
-                viewModel.createMateri(nama, deskripsi, manfaat, uploadedGambarUrl, urutan)
+                viewModel.createMateri(nama, deskripsi, manfaat, uploadedGambarUrl, uploadedVideoUrl, urutan)
             }
             .setNegativeButton("Batal", null)
             .show()
@@ -195,6 +257,7 @@ class KelolaMateriFragment : Fragment() {
 
     private fun showEditDialog(materi: MateriApi) {
         uploadedGambarUrl = materi.gambar_url
+        uploadedVideoUrl = materi.video_url
 
         val dialogView = layoutInflater.inflate(R.layout.dialog_materi, null)
         val etNama = dialogView.findViewById<EditText>(R.id.etNamaMateri)
@@ -226,6 +289,13 @@ class KelolaMateriFragment : Fragment() {
             pickGambarLauncher.launch("image/*")
         }
 
+        setupVideoFields(dialogView)
+        if (!materi.video_url.isNullOrBlank()) {
+            currentVideoName?.visibility = View.VISIBLE
+            currentVideoName?.text = "Video sudah ada"
+            (currentVideoButton as? com.google.android.material.button.MaterialButton)?.text = "Ganti Video"
+        }
+
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Materi")
             .setView(dialogView)
@@ -239,7 +309,7 @@ class KelolaMateriFragment : Fragment() {
                     return@setPositiveButton
                 }
 
-                viewModel.updateMateri(materi.id, nama, deskripsi, manfaat, uploadedGambarUrl, materi.urutan)
+                viewModel.updateMateri(materi.id, nama, deskripsi, manfaat, uploadedGambarUrl, uploadedVideoUrl, materi.urutan)
             }
             .setNegativeButton("Batal", null)
             .show()

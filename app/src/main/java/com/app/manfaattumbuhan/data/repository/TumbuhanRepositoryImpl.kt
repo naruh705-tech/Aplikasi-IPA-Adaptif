@@ -33,6 +33,7 @@ class TumbuhanRepositoryImpl : TumbuhanRepository {
                         manfaat = materi.manfaat,
                         imageRes = 0,
                         gambarUrl = materi.gambar_url,
+                        videoUrl = materi.video_url,
                         apiId = materi.id
                     )
                 }

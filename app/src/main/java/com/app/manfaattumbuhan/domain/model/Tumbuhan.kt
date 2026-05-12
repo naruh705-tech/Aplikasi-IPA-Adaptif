@@ -7,5 +7,6 @@ data class Tumbuhan(
     val manfaat: String,
     val imageRes: Int = 0,
     val gambarUrl: String? = null,
+    val videoUrl: String? = null,
     val apiId: String? = null
 )

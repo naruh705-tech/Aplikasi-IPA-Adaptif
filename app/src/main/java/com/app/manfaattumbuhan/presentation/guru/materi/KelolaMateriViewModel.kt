@@ -44,12 +44,12 @@ class KelolaMateriViewModel : ViewModel() {
         }
     }
 
-    fun createMateri(nama: String, deskripsi: String, manfaat: String, gambarUrl: String?, urutan: Int) {
+    fun createMateri(nama: String, deskripsi: String, manfaat: String, gambarUrl: String?, videoUrl: String?, urutan: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val token = TokenManager.getToken()
-                val request = CreateMateriRequest(nama, deskripsi, manfaat, gambarUrl, urutan)
+                val request = CreateMateriRequest(nama, deskripsi, manfaat, gambarUrl, videoUrl, urutan)
                 val response = apiService.createMateri(token, request)
                 if (response.isSuccessful && response.body()?.success == true) {
                     _message.value = "Materi berhasil ditambahkan"
@@ -65,12 +65,12 @@ class KelolaMateriViewModel : ViewModel() {
         }
     }
 
-    fun updateMateri(id: String, nama: String, deskripsi: String, manfaat: String, gambarUrl: String?, urutan: Int) {
+    fun updateMateri(id: String, nama: String, deskripsi: String, manfaat: String, gambarUrl: String?, videoUrl: String?, urutan: Int) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val token = TokenManager.getToken()
-                val request = UpdateMateriRequest(nama, deskripsi, manfaat, gambarUrl, urutan)
+                val request = UpdateMateriRequest(nama, deskripsi, manfaat, gambarUrl, videoUrl, urutan)
                 val response = apiService.updateMateri(token, id, request)
                 if (response.isSuccessful && response.body()?.success == true) {
                     _message.value = "Materi berhasil diperbarui"

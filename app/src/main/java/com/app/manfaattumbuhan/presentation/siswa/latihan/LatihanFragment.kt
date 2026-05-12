@@ -9,8 +9,11 @@ import android.view.ViewGroup
 import android.view.Window
 import android.widget.RadioButton
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.fragment.app.Fragment
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -288,35 +291,43 @@ class LatihanFragment : Fragment() {
         dialogBuilder.show()
     }
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun showVideoPopup(videoUrl: String) {
         val dialog = Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_video_player)
 
-        val videoPlayer = dialog.findViewById<VideoView>(R.id.videoPlayer)
+        val playerView = dialog.findViewById<PlayerView>(R.id.videoPlayer)
         val btnTutup = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnTutupVideo)
         val videoLoading = dialog.findViewById<View>(R.id.videoLoading)
 
-        videoPlayer.setVideoURI(Uri.parse(videoUrl))
-        val mediaController = android.widget.MediaController(requireContext())
-        mediaController.setAnchorView(videoPlayer)
-        videoPlayer.setMediaController(mediaController)
-        videoPlayer.setOnPreparedListener {
-            videoLoading.visibility = View.GONE
-        }
-        videoPlayer.setOnErrorListener { _, _, _ ->
-            videoLoading.visibility = View.GONE
-            false
-        }
-        videoPlayer.start()
+        val exoPlayer = ExoPlayer.Builder(requireContext()).build()
+        playerView.player = exoPlayer
+
+        val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+        exoPlayer.setMediaItem(mediaItem)
+
+        exoPlayer.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_BUFFERING -> videoLoading.visibility = View.VISIBLE
+                    Player.STATE_READY -> videoLoading.visibility = View.GONE
+                    Player.STATE_ENDED -> videoLoading.visibility = View.GONE
+                    Player.STATE_IDLE -> videoLoading.visibility = View.GONE
+                }
+            }
+        })
+
+        exoPlayer.prepare()
+        exoPlayer.playWhenReady = true
 
         btnTutup.setOnClickListener {
-            videoPlayer.stopPlayback()
+            exoPlayer.release()
             dialog.dismiss()
         }
 
         dialog.setOnDismissListener {
-            videoPlayer.stopPlayback()
+            exoPlayer.release()
         }
 
         dialog.show()

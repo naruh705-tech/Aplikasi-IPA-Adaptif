@@ -15,10 +15,13 @@ import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.activity.result.ActivityResultLauncher
 import android.app.Dialog
 import android.view.Window
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -263,48 +266,43 @@ class KelolaSoalFragment : Fragment() {
         }
     }
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun showVideoPopup(videoUrl: String) {
         val dialog = Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_video_player)
 
-        val videoPlayer = dialog.findViewById<VideoView>(R.id.videoPlayer)
+        val playerView = dialog.findViewById<PlayerView>(R.id.videoPlayer)
         val videoLoading = dialog.findViewById<ProgressBar>(R.id.videoLoading)
         val btnTutup = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnTutupVideo)
 
-        videoLoading.visibility = android.view.View.VISIBLE
-        videoPlayer.setVideoURI(Uri.parse(videoUrl))
-        val mediaController = android.widget.MediaController(requireContext())
-        mediaController.setAnchorView(videoPlayer)
-        videoPlayer.setMediaController(mediaController)
-        videoPlayer.setOnPreparedListener { mediaPlayer ->
-            videoLoading.visibility = android.view.View.GONE
-            mediaPlayer.setOnInfoListener { _, what, _ ->
-                when (what) {
-                    android.media.MediaPlayer.MEDIA_INFO_BUFFERING_START -> {
-                        videoLoading.visibility = android.view.View.VISIBLE
-                    }
-                    android.media.MediaPlayer.MEDIA_INFO_BUFFERING_END,
-                    android.media.MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START -> {
-                        videoLoading.visibility = android.view.View.GONE
-                    }
+        val exoPlayer = ExoPlayer.Builder(requireContext()).build()
+        playerView.player = exoPlayer
+
+        val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
+        exoPlayer.setMediaItem(mediaItem)
+
+        exoPlayer.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_BUFFERING -> videoLoading.visibility = View.VISIBLE
+                    Player.STATE_READY -> videoLoading.visibility = View.GONE
+                    Player.STATE_ENDED -> videoLoading.visibility = View.GONE
+                    Player.STATE_IDLE -> videoLoading.visibility = View.GONE
                 }
-                false
             }
-        }
-        videoPlayer.setOnErrorListener { _, _, _ ->
-            videoLoading.visibility = android.view.View.GONE
-            false
-        }
-        videoPlayer.start()
+        })
+
+        exoPlayer.prepare()
+        exoPlayer.playWhenReady = true
 
         btnTutup.setOnClickListener {
-            videoPlayer.stopPlayback()
+            exoPlayer.release()
             dialog.dismiss()
         }
 
         dialog.setOnDismissListener {
-            videoPlayer.stopPlayback()
+            exoPlayer.release()
         }
 
         dialog.show()
